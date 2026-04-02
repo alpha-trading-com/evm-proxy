@@ -1,0 +1,27 @@
+node_modules/
+# Hardhat: ignore build tree except committed StakeWrap artifact (deploy + Python ABI load without compiling)
+artifacts/*
+!artifacts/contracts/
+artifacts/contracts/*
+!artifacts/contracts/StakeWrap.sol/
+artifacts/contracts/StakeWrap.sol/*
+!artifacts/contracts/StakeWrap.sol/StakeWrap.json
+cache/
+.env
+# Local TLS key material (see run_server.sh)
+ssl/*.pem
+ssl/*.key
+deployment.json
+*.log
+.DS_Store
+__pycache__/
+*.pyc
+.pytest_cache/
+venv/
+venv/
+
+# Rust / Cargo
+target/
+**/target/
+*.pdb
+*.rs.bk
