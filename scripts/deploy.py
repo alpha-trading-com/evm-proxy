@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Deploy the StakeWrap contract to the blockchain.
-After deploy, calls setContractAccountId32() and setBaseFeesRao() so execute() can use packed params.
+Deploy the DelegateProxyCaller contract to the blockchain.
+Writes deployment.json with address, ABI, and metadata.
 """
 
 import os
@@ -16,8 +16,8 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-STAKE_WRAP_ARTIFACT = os.path.join(
-    PROJECT_ROOT, "artifacts", "contracts", "StakeWrap.sol", "StakeWrap.json"
+DELEGATE_PROXY_CALLER_ARTIFACT = os.path.join(
+    PROJECT_ROOT, "artifacts", "contracts", "DelegateProxyCaller.sol", "DelegateProxyCaller.json"
 )
 
 load_dotenv()
@@ -38,11 +38,11 @@ def load_contract_bytecode(artifact_path):
 
 
 def deploy_contract(w3, account, contract_abi, contract_bytecode):
-    """Deploy the contract and return the contract instance."""
+    """Deploy the contract and return the contract address, abi and tx hash."""
     # Create contract instance
     contract = w3.eth.contract(abi=contract_abi, bytecode=contract_bytecode)
     
-    # Build transaction - no constructor parameters needed (allowedColdkey is hardcoded)
+    # Build transaction - no constructor parameters needed
     construct_txn = contract.constructor().build_transaction({
         'from': account.address,
         'nonce': w3.eth.get_transaction_count(account.address),
@@ -89,13 +89,13 @@ def main():
     print(f"Account balance: {Web3.from_wei(balance, 'ether')} TAO")
     
     # Load contract artifacts (from repo: compile on build server, or `npm run compile` locally)
-    artifact_path = STAKE_WRAP_ARTIFACT
+    artifact_path = DELEGATE_PROXY_CALLER_ARTIFACT
     if not os.path.exists(artifact_path):
         raise FileNotFoundError(
             f"Contract artifact not found at {artifact_path}. "
-            "On the compile machine: npm run compile, then git commit and push "
-            "artifacts/contracts/StakeWrap.sol/StakeWrap.json (and abi/StakeWrap.abi.json). "
-            "On this machine: git pull."
+            "Run `npx hardhat compile` (or equivalent) so that "
+            "artifacts/contracts/DelegateProxyCaller.sol/DelegateProxyCaller.json exists, "
+            "then re-run this script."
         )
     
     contract_abi = load_contract_abi(artifact_path)
@@ -120,40 +120,6 @@ def main():
 
     print(f"\nDeployment info saved to deployment.json")
     print(f"Contract Address: {contract_address}")
-
-    # Set contract's AccountId32 and base fees (required for execute(); set once after deploy)
-    from evm import contract_address_bytes32
-    from bt_utils.constants import STAKE_INFO_BASE_FEE_RAO, LIMIT_PRICE_BASE_FEE_RAO
-    contract_account_id32 = contract_address_bytes32(contract_address)
-    deployed = w3.eth.contract(address=Web3.to_checksum_address(contract_address), abi=abi)
-    nonce = w3.eth.get_transaction_count(account.address)
-    set_tx = deployed.functions.setContractAccountId32(contract_account_id32).build_transaction({
-        "from": account.address,
-        "nonce": nonce,
-        "gas": 100000,
-        "gasPrice": w3.eth.gas_price,
-    })
-    signed_set = account.sign_transaction(set_tx)
-    set_hash = w3.eth.send_raw_transaction(signed_set.raw_transaction)
-    print(f"Setting contractAccountId32... tx {set_hash.hex()}")
-    set_receipt = w3.eth.wait_for_transaction_receipt(set_hash)
-    if set_receipt["status"] != 1:
-        raise RuntimeError("setContractAccountId32 failed")
-    print("contractAccountId32 set.")
-    nonce += 1
-    base_fees_tx = deployed.functions.setBaseFeesRao(STAKE_INFO_BASE_FEE_RAO, LIMIT_PRICE_BASE_FEE_RAO).build_transaction({
-        "from": account.address,
-        "nonce": nonce,
-        "gas": 100000,
-        "gasPrice": w3.eth.gas_price,
-    })
-    signed_bf = account.sign_transaction(base_fees_tx)
-    bf_hash = w3.eth.send_raw_transaction(signed_bf.raw_transaction)
-    print(f"Setting base fees (stakeInfo={STAKE_INFO_BASE_FEE_RAO}, limitPrice={LIMIT_PRICE_BASE_FEE_RAO} rao)... tx {bf_hash.hex()}")
-    bf_receipt = w3.eth.wait_for_transaction_receipt(bf_hash)
-    if bf_receipt["status"] != 1:
-        raise RuntimeError("setBaseFeesRao failed")
-    print("setBaseFeesRao done.")
 
 
 if __name__ == '__main__':
