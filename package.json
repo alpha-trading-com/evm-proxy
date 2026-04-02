@@ -1,18 +1,16 @@
 {
-  "name": "evm-staking",
+  "name": "evm-proxy",
   "version": "1.0.0",
-  "description": "Bittensor staking and unstaking contract using EVM",
+  "description": "Delegate wallet proxy caller contract using EVM",
   "main": "index.js",
   "scripts": {
-    "compile": "hardhat compile && node scripts/export-stake-wrap-abi.js",
-    "export-abi": "node scripts/export-stake-wrap-abi.js",
-    "test": "hardhat test",
-    "deploy:upgradeable": "hardhat run scripts/deploy-upgradeable.js --network finney",
-    "upgrade": "hardhat run scripts/upgrade.js --network finney"
+    "compile": "hardhat compile",
+    "test": "hardhat test"
   },
   "keywords": [
     "bittensor",
-    "staking",
+    "proxy",
+    "delegate",
     "evm",
     "solidity"
   ],
