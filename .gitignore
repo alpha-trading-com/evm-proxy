@@ -1,12 +1,18 @@
 node_modules/
-# Hardhat: ignore build tree except committed StakeWrap artifact (deploy + Python ABI load without compiling)
+# Hardhat: ignore build tree except optional pinned DelegateProxyCaller ABI (deploy + Python without compile)
 artifacts/*
 !artifacts/contracts/
 artifacts/contracts/*
-!artifacts/contracts/StakeWrap.sol/
-artifacts/contracts/StakeWrap.sol/*
-!artifacts/contracts/StakeWrap.sol/StakeWrap.json
+!artifacts/contracts/DelegateProxyCaller.sol/
+artifacts/contracts/DelegateProxyCaller.sol/*
+!artifacts/contracts/DelegateProxyCaller.sol/DelegateProxyCaller.json
+# Hardhat compiler build metadata (large, regenerated on compile)
+artifacts/build-info/
 cache/
+# Python / packaging build outputs
+build/
+dist/
+*.egg-info/
 .env
 # Local TLS key material (see run_server.sh)
 ssl/*.pem
@@ -17,7 +23,6 @@ deployment.json
 __pycache__/
 *.pyc
 .pytest_cache/
-venv/
 venv/
 
 # Rust / Cargo
