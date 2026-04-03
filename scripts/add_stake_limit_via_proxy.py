@@ -42,13 +42,9 @@ from web3 import Web3
 import bittensor as bt
 from bittensor import Balance
 
-from evm.address import ss58_to_bytes32
+from evm.bittensor_proxy import bittensor_call_via_proxy_contract
 from evm.contract import load_deployment_info
 from evm.delegate_proxy import get_contract
-from utils.encode_extrinsic import (
-    encode_add_stake_limit_call_hex,
-    proxy_type_u8_from_name,
-)
 
 load_dotenv(os.path.join(_root, ".env"))
 
@@ -107,30 +103,9 @@ def main() -> None:
     else:
         amount_rao = int(args.rao)
 
-    print("Connecting Subtensor for call encoding …")
-    subtensor = _subtensor_from_env()
-    try:
-        if args.proxy_type_u8 is not None:
-            proxy_u8 = int(args.proxy_type_u8)
-        else:
-            proxy_u8 = proxy_type_u8_from_name(subtensor, args.proxy_type)
-        print(f"Using proxy type byte {proxy_u8} ({args.proxy_type!r})")
-
-        call_hex = encode_add_stake_limit_call_hex(
-            subtensor,
-            args.hotkey,
-            args.netuid,
-            amount_rao,
-            args.limit_price,
-            args.allow_partial,
-        )
-    finally:
-        subtensor.close()
-
-    nbytes = (len(call_hex) - 2) // 2 if call_hex.startswith("0x") else len(call_hex) // 2
-    print(f"Encoded add_stake_limit call ({nbytes} bytes): {call_hex[:66]}…")
-
-    real_id = ss58_to_bytes32(args.delegator)
+    proxy_kw: int | str = (
+        int(args.proxy_type_u8) if args.proxy_type_u8 is not None else args.proxy_type
+    )
 
     w3 = Web3(Web3.HTTPProvider(rpc_url))
     if not w3.is_connected():
@@ -147,23 +122,31 @@ def main() -> None:
 
     contract = get_contract(w3, contract_address, abi=abi)
 
-    tx = contract.functions.proxyCall(
-        real_id,
-        proxy_u8,
-        bytes.fromhex(call_hex[2:]),
-    ).build_transaction(
-        {
-            "from": account.address,
-            "nonce": w3.eth.get_transaction_count(account.address),
-            "gas": args.gas,
-            "gasPrice": w3.eth.gas_price,
-        }
-    )
-    signed = account.sign_transaction(tx)
-    tx_hash = w3.eth.send_raw_transaction(signed.raw_transaction)
-    print(f"proxyCall tx: {tx_hash.hex()}")
-    receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
-    print(f"Confirmed block {receipt.blockNumber}, status={receipt.status}")
+    print("Connecting Subtensor to compose add_stake_limit …")
+    subtensor = _subtensor_from_env()
+    try:
+        receipt = bittensor_call_via_proxy_contract(
+            subtensor,
+            w3,
+            account,
+            contract_address,
+            delegator_ss58=args.delegator,
+            proxy_type=proxy_kw,
+            call_module="SubtensorModule",
+            call_function="add_stake_limit",
+            call_params={
+                "hotkey": args.hotkey,
+                "netuid": args.netuid,
+                "amount_staked": int(amount_rao),
+                "limit_price": int(args.limit_price),
+                "allow_partial": bool(args.allow_partial),
+            },
+            gas=args.gas,
+            contract=contract,
+            verbose=True,
+        )
+    finally:
+        subtensor.close()
     if receipt.status != 1:
         raise SystemExit("Transaction reverted")
 

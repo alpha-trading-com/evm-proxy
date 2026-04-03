@@ -20,9 +20,15 @@ from evm.contract import (
     load_deployment_info,
     get_contract,
 )
+from evm.bittensor_proxy import (
+    bittensor_call_via_proxy_contract,
+    resolve_proxy_type_u8,
+    runtime_call_via_proxy_contract,
+)
 from evm.delegate_proxy import (
     CONTRACT_ABI,
     proxy_call,
+    proxy_call_with_runtime_call,
 )
 
 __all__ = [
@@ -42,4 +48,8 @@ __all__ = [
     "get_contract",
     "CONTRACT_ABI",
     "proxy_call",
+    "proxy_call_with_runtime_call",
+    "bittensor_call_via_proxy_contract",
+    "runtime_call_via_proxy_contract",
+    "resolve_proxy_type_u8",
 ]
