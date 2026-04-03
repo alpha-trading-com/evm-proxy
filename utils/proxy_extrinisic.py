@@ -157,3 +157,8 @@ def add_proxy_extrinsic(
         wait_for_inclusion=wait_for_inclusion,
         wait_for_finalization=wait_for_finalization,
     )
+
+
+if __name__ == "__main__":
+    subtensor = bt.subtensor("finney")
+    print(list_proxies_for_principal(subtensor, "5HCT4AarReToT1BKyLtJXJfSLs4zRS7dENnZ7iysqrqxXyV7"))
