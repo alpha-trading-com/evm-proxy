@@ -8,7 +8,7 @@ the old evm.stake_wrap API but targets the DelegateProxyCaller contract:
 - proxyCall(bytes32 realAccountId32, uint8 proxyType, bytes call)
 """
 
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, TypeAlias
 
 from eth_account import Account
 from web3 import Web3
@@ -17,6 +17,9 @@ from web3.types import TxReceipt
 from evm.address import ss58_to_bytes32
 from evm.contract import get_contract as _evm_get_contract, get_stake_wrap_abi
 from utils.substrate_runtime_call import runtime_call_bytes
+
+# Real account on whose behalf the proxy runs (Substrate SS58, e.g. ``5GrwvaEF...``).
+SS58: TypeAlias = str
 
 # Minimal ABI for DelegateProxyCaller interaction (fallback when artifact missing)
 CONTRACT_ABI: List[Dict[str, Any]] = [
@@ -51,30 +54,6 @@ def get_contract(w3, contract_address: str, abi: Optional[List[Dict[str, Any]]] 
     return _evm_get_contract(w3, contract_address, abi=abi)
 
 
-def _coerce_real_account_id32(
-    *,
-    real_account_id32: Optional[Union[str, bytes]] = None,
-    delegator_ss58: Optional[str] = None,
-) -> bytes:
-    if delegator_ss58 is not None and delegator_ss58.strip():
-        if real_account_id32 is not None:
-            raise ValueError("Use only one of delegator_ss58 or real_account_id32")
-        return ss58_to_bytes32(delegator_ss58.strip())
-    if real_account_id32 is None:
-        raise ValueError("Provide delegator_ss58 or real_account_id32")
-    if isinstance(real_account_id32, bytes):
-        if len(real_account_id32) != 32:
-            raise ValueError("real_account_id32 bytes must be length 32")
-        return real_account_id32
-    s = str(real_account_id32).strip()
-    if s.startswith(("0x", "0X")):
-        s = s[2:]
-    b = bytes.fromhex(s)
-    if len(b) != 32:
-        raise ValueError("real_account_id32 hex must decode to 32 bytes")
-    return b
-
-
 def proxy_call_with_runtime_call(
     w3: Web3,
     account: Account,
@@ -82,8 +61,7 @@ def proxy_call_with_runtime_call(
     *,
     proxy_type: int,
     runtime_call: Any,
-    delegator_ss58: Optional[str] = None,
-    real_account_id32: Optional[Union[str, bytes]] = None,
+    real_ss58: SS58,
     gas: int = 2_000_000,
     contract=None,
     verbose: bool = True,
@@ -95,15 +73,12 @@ def proxy_call_with_runtime_call(
 
     - ``bytes`` / ``bytearray``
     - hex ``str`` (``RuntimeCall`` bytes)
-    - result of ``subtensor.substrate.compose_call(...)``
+    - result of ``substrate.compose_call(...)``
 
-    The **owner** ``account`` signs the EVM tx; ``delegator_ss58`` / ``real_account_id32`` is the
-    real Substrate account that added this contract as a proxy.
+    ``real_ss58``: the real account's **SS58** address (decoded to ``AccountId32`` for the precompile).
+    The **owner** ``account`` signs the EVM tx.
     """
-    real_bytes = _coerce_real_account_id32(
-        real_account_id32=real_account_id32,
-        delegator_ss58=delegator_ss58,
-    )
+    real_bytes = ss58_to_bytes32(real_ss58.strip())
     call_bytes = runtime_call_bytes(runtime_call)
 
     if contract is None:

@@ -5,7 +5,7 @@ CLI for the deployed DelegateProxyCaller contract.
 Supports:
 - owner: show owner and whether current key is owner
 - balance: show contract balance
-- proxyCall: call DelegateProxyCaller.proxyCall(realAccountId32, proxyType, callBytes)
+- proxyCall: call DelegateProxyCaller.proxyCall(realSs58, proxyType, callBytes)
 """
 
 import os
@@ -32,8 +32,12 @@ def main():
     parser.add_argument('action', choices=['owner', 'balance', 'proxyCall'],
                         help='Action to perform')
     parser.add_argument('--contract', type=str, help='Contract address (overrides deployment.json)')
-    parser.add_argument('--real-account-id32', dest='real_account_id32', type=str,
-                        help='Real AccountId32 as 0x-prefixed 32-byte hex string')
+    parser.add_argument(
+        '--real-ss58',
+        dest='real_ss58',
+        type=str,
+        help='Real account SS58 (on whose behalf the proxy executes)',
+    )
     parser.add_argument('--proxy-type', dest='proxy_type', type=int,
                         help='Proxy type index (e.g. 0 = Any)')
     parser.add_argument('--call-bytes', dest='call_bytes', type=str,
@@ -87,8 +91,8 @@ def main():
         print(f"Note: Balance is in wei (10^18).")
 
     elif args.action == "proxyCall":
-        if not all([args.real_account_id32, args.proxy_type is not None, args.call_bytes]):
-            parser.error("proxyCall requires --real-account-id32, --proxy-type, and --call-bytes")
+        if not all([args.real_ss58, args.proxy_type is not None, args.call_bytes]):
+            parser.error("proxyCall requires --real-ss58, --proxy-type, and --call-bytes")
         try:
             proxy_call_with_runtime_call(
                 w3,
@@ -96,7 +100,7 @@ def main():
                 contract_address,
                 proxy_type=int(args.proxy_type),
                 runtime_call=args.call_bytes,
-                real_account_id32=args.real_account_id32,
+                real_ss58=args.real_ss58,
                 gas=500_000,
                 contract=contract,
             )

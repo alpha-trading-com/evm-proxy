@@ -44,7 +44,7 @@ from bittensor import Balance
 
 from evm.contract import load_deployment_info
 from evm.delegate_proxy import get_contract, proxy_call_with_runtime_call
-from evm.proxy_call import resolve_proxy_type_u8
+from utils.proxy_type_u8 import resolve_proxy_type_u8
 from utils.substrate_runtime_call import runtime_call_bytes
 
 load_dotenv(os.path.join(_root, ".env"))
@@ -145,7 +145,7 @@ def main() -> None:
             contract_address,
             proxy_type=pt,
             runtime_call=inner,
-            delegator_ss58=args.delegator,
+            real_ss58=args.delegator,
             gas=args.gas,
             contract=contract,
             verbose=True,
