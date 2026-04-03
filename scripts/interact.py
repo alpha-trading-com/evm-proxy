@@ -22,7 +22,7 @@ from eth_account import Account
 from dotenv import load_dotenv
 
 from evm.contract import load_deployment_info
-from evm.delegate_proxy import get_contract, proxy_call
+from evm.delegate_proxy import get_contract, proxy_call_with_runtime_call
 
 load_dotenv()
 
@@ -90,13 +90,14 @@ def main():
         if not all([args.real_account_id32, args.proxy_type is not None, args.call_bytes]):
             parser.error("proxyCall requires --real-account-id32, --proxy-type, and --call-bytes")
         try:
-            proxy_call(
+            proxy_call_with_runtime_call(
                 w3,
                 account,
                 contract_address,
-                args.real_account_id32,
-                int(args.proxy_type),
-                args.call_bytes,
+                proxy_type=int(args.proxy_type),
+                runtime_call=args.call_bytes,
+                real_account_id32=args.real_account_id32,
+                gas=500_000,
                 contract=contract,
             )
         except ValueError as e:

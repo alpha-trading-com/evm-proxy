@@ -42,9 +42,10 @@ from web3 import Web3
 import bittensor as bt
 from bittensor import Balance
 
-from evm.bittensor_proxy import bittensor_call_via_proxy_contract
 from evm.contract import load_deployment_info
-from evm.delegate_proxy import get_contract
+from evm.delegate_proxy import get_contract, proxy_call_with_runtime_call
+from evm.proxy_call import resolve_proxy_type_u8
+from utils.substrate_runtime_call import runtime_call_bytes
 
 load_dotenv(os.path.join(_root, ".env"))
 
@@ -125,13 +126,7 @@ def main() -> None:
     print("Connecting Subtensor to compose add_stake_limit …")
     subtensor = _subtensor_from_env()
     try:
-        receipt = bittensor_call_via_proxy_contract(
-            subtensor,
-            w3,
-            account,
-            contract_address,
-            delegator_ss58=args.delegator,
-            proxy_type=proxy_kw,
+        call = subtensor.substrate.compose_call(
             call_module="SubtensorModule",
             call_function="add_stake_limit",
             call_params={
@@ -141,6 +136,16 @@ def main() -> None:
                 "limit_price": int(args.limit_price),
                 "allow_partial": bool(args.allow_partial),
             },
+        )
+        inner = runtime_call_bytes(call)
+        pt = resolve_proxy_type_u8(subtensor, proxy_kw)
+        receipt = proxy_call_with_runtime_call(
+            w3,
+            account,
+            contract_address,
+            proxy_type=pt,
+            runtime_call=inner,
+            delegator_ss58=args.delegator,
             gas=args.gas,
             contract=contract,
             verbose=True,

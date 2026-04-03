@@ -131,34 +131,3 @@ def proxy_call_with_runtime_call(
             f"Transaction confirmed in block: {receipt.blockNumber}, status={receipt.status}"
         )
     return receipt
-
-
-def proxy_call(
-    w3,
-    account: Account,
-    contract_address: str,
-    real_account_id32_hex: str,
-    proxy_type: int,
-    call_bytes_hex: str,
-    contract=None,
-    gas: int = 500_000,
-    verbose: bool = True,
-):
-    """
-    Call DelegateProxyCaller.proxyCall(realAccountId32, proxyType, callBytes).
-
-    - real_account_id32_hex: 0x-prefixed 32-byte hex AccountId32 of the real account.
-    - proxy_type: proxy type index (e.g. 0 = Any).
-    - call_bytes_hex: 0x-prefixed SCALE-encoded RuntimeCall bytes.
-    """
-    return proxy_call_with_runtime_call(
-        w3,
-        account,
-        contract_address,
-        proxy_type=proxy_type,
-        runtime_call=call_bytes_hex,
-        real_account_id32=real_account_id32_hex,
-        gas=gas,
-        contract=contract,
-        verbose=verbose,
-    )
