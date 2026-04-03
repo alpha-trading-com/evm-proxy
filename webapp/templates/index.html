@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Stake via EVM proxy</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header class="header">
+    <h1>Stake / unstake (EVM → proxy)</h1>
+    <p class="meta">
+      Precompile <code>real</code>: <span class="mono">{{ evm_proxy_real }}</span>
+      {% if nested %}
+      · Stake owner (inner proxy): <span class="mono">{{ stake_owner }}</span>
+      {% else %}
+      · Single hop (EVM is direct proxy of stake owner)
+      {% endif %}
+    </p>
+  </header>
+
+  <main class="grid">
+    <section class="card">
+      <h2>Add stake</h2>
+      <form class="form" data-endpoint="/api/add-stake">
+        <label>Netuid <input name="netuid" type="number" min="0" required /></label>
+        <label>Hotkey (SS58) <input name="hotkey" type="text" required /></label>
+        <label>Amount (TAO) <input name="amount_tao" type="number" step="any" min="0" required /></label>
+        <button type="submit">Submit</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>Add stake (limit)</h2>
+      <form class="form" data-endpoint="/api/add-stake-limit">
+        <label>Netuid <input name="netuid" type="number" min="0" required /></label>
+        <label>Hotkey <input name="hotkey" type="text" required /></label>
+        <label>Amount (TAO) <input name="amount_tao" type="number" step="any" min="0" required /></label>
+        <label>Limit price (RAO) <input name="limit_price_rao" type="number" min="0" required /></label>
+        <label class="row"><input name="allow_partial" type="checkbox" /> Allow partial</label>
+        <button type="submit">Submit</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>Remove stake</h2>
+      <form class="form" data-endpoint="/api/remove-stake">
+        <label>Netuid <input name="netuid" type="number" min="0" required /></label>
+        <label>Hotkey <input name="hotkey" type="text" required /></label>
+        <label>Amount (TAO) <input name="amount_tao" type="number" step="any" min="0" required /></label>
+        <button type="submit">Submit</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>Remove stake (limit)</h2>
+      <form class="form" data-endpoint="/api/remove-stake-limit">
+        <label>Netuid <input name="netuid" type="number" min="0" required /></label>
+        <label>Hotkey <input name="hotkey" type="text" required /></label>
+        <label>Amount (TAO) <input name="amount_tao" type="number" step="any" min="0" required /></label>
+        <label>Limit price (RAO) <input name="limit_price_rao" type="number" min="0" required /></label>
+        <label class="row"><input name="allow_partial" type="checkbox" /> Allow partial</label>
+        <button type="submit">Submit</button>
+      </form>
+    </section>
+
+    <section class="card wide">
+      <h2>Move stake</h2>
+      <form class="form" data-endpoint="/api/move-stake">
+        <div class="row2">
+          <label>Origin netuid <input name="origin_netuid" type="number" min="0" required /></label>
+          <label>Dest netuid <input name="dest_netuid" type="number" min="0" required /></label>
+        </div>
+        <label>Origin hotkey <input name="origin_hotkey" type="text" required /></label>
+        <label>Destination hotkey <input name="dest_hotkey" type="text" required /></label>
+        <label>Amount (TAO) <input name="amount_tao" type="number" step="any" min="0" required /></label>
+        <button type="submit">Submit</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>Burned register</h2>
+      <form class="form" data-endpoint="/api/burned-register">
+        <label>Netuid <input name="netuid" type="number" min="0" required /></label>
+        <label>Hotkey <input name="hotkey" type="text" required /></label>
+        <button type="submit">Submit</button>
+      </form>
+    </section>
+  </main>
+
+  <pre id="out" class="out" aria-live="polite"></pre>
+
+  <script>
+    const out = document.getElementById("out");
+    function show(obj) {
+      out.textContent = typeof obj === "string" ? obj : JSON.stringify(obj, null, 2);
+    }
+    document.querySelectorAll("form.form").forEach((form) => {
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const endpoint = form.dataset.endpoint;
+        const fd = new FormData(form);
+        const body = {};
+        for (const [k, v] of fd.entries()) {
+          if (k === "allow_partial") continue;
+          if (v === "") continue;
+          const num = Number(v);
+          const isNumField =
+            !k.includes("hotkey") &&
+            v.trim() !== "" &&
+            Number.isFinite(num) &&
+            !Number.isNaN(num);
+          body[k] = isNumField ? num : v;
+        }
+        if (endpoint.includes("limit")) {
+          body.allow_partial = fd.has("allow_partial");
+        }
+        show("Submitting…");
+        try {
+          const res = await fetch(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
+          const data = await res.json().catch(() => ({}));
+          show({ status: res.status, ...data });
+        } catch (err) {
+          show(String(err));
+        }
+      });
+    });
+  </script>
+</body>
+</html>
