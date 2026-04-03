@@ -36,6 +36,44 @@ def _proxy_type_and_delay_from_definition(pdef: Any) -> Tuple[str, int]:
     raise ValueError(f"Unsupported ProxyDefinition shape: {pdef!r}")
 
 
+def _delegate_field_to_bytes(delegate_field: Any) -> bytes:
+    """AccountId32 from storage: bytes, or nested tuples of ints (scalecodec)."""
+    d = _unwrap_scale(delegate_field)
+    if isinstance(d, bytes):
+        if len(d) != 32:
+            raise ValueError(f"AccountId must be 32 bytes, got {len(d)}")
+        return d
+    while isinstance(d, (list, tuple)) and len(d) == 1:
+        d = _unwrap_scale(d[0])
+    if isinstance(d, (list, tuple)):
+        ints: List[int] = []
+        for x in d:
+            x = _unwrap_scale(x)
+            if isinstance(x, int):
+                ints.append(x)
+            elif isinstance(x, (list, tuple)):
+                for y in x:
+                    y = _unwrap_scale(y)
+                    if isinstance(y, int):
+                        ints.append(y)
+        if len(ints) == 32:
+            return bytes(ints)
+    raise ValueError(f"Cannot decode delegate AccountId: {delegate_field!r}")
+
+
+def _collect_proxy_definition_dicts(obj: Any, out: List[Any]) -> None:
+    """Find ProxyDefinition structs encoded as dicts with 'delegate' + 'proxy_type'."""
+    obj = _unwrap_scale(obj)
+    if isinstance(obj, dict) and "delegate" in obj:
+        pt = obj.get("proxy_type") or obj.get("ProxyType")
+        if pt is not None:
+            out.append(obj)
+            return
+    if isinstance(obj, (list, tuple)):
+        for x in obj:
+            _collect_proxy_definition_dicts(x, out)
+
+
 def list_proxies_for_principal(
     subtensor: bt.Subtensor, principal_ss58: str
 ) -> List[Tuple[str, str, int]]:
@@ -46,12 +84,25 @@ def list_proxies_for_principal(
     val = _unwrap_scale(res)
     if not val or not isinstance(val, (list, tuple)) or len(val) < 1:
         return []
-    entries_raw = val[0]
-    entries_raw = _unwrap_scale(entries_raw)
-    if not entries_raw:
+    entries_blob = _unwrap_scale(val[0])
+    if not entries_blob:
         return []
+
+    struct_rows: List[Any] = []
+    _collect_proxy_definition_dicts(entries_blob, struct_rows)
+
     out: List[Tuple[str, str, int]] = []
-    for row in entries_raw:
+    if struct_rows:
+        for row in struct_rows:
+            row = _unwrap_scale(row)
+            acc = _delegate_field_to_bytes(row["delegate"])
+            del_ss58 = subtensor.substrate.ss58_encode(acc)
+            pt_str, delay = _proxy_type_and_delay_from_definition(row)
+            out.append((del_ss58, pt_str, delay))
+        return out
+
+    # Legacy: Vec<(AccountId, ProxyDefinition)>
+    for row in entries_blob:
         row = _unwrap_scale(row)
         if not isinstance(row, (list, tuple)) or len(row) < 2:
             continue
