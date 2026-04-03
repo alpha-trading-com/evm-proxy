@@ -67,21 +67,19 @@ def main() -> None:
         # ---------------------------------------------------------------------------
         HOTKEY_SS58 = "5Gq2gs4ft5dhhjbHabvVbAhjMCV2RgKmVJKAFCUWiirbRT21"
         NETUID = 64
-        AMOUNT_TAO = 0.2  # stake size; or set AMOUNT_RAO and AMOUNT_TAO = None
-        AMOUNT_RAO = Balance.from_tao(AMOUNT_TAO).rao
+        AMOUNT_TAO = 0.1  # stake size; or set AMOUNT_RAO and AMOUNT_TAO = None
+        AMOUNT_RAO = Balance.from_tao(1.00).rao
         LIMIT_PRICE = Balance.from_tao(0.2).rao
         ALLOW_PARTIAL = False
 
         # ---------------------------------------------------------------------------
         call = subtensor.substrate.compose_call(
             call_module="SubtensorModule",
-            call_function="add_stake_limit",
+            call_function="remove_stake",
             call_params={
                 "hotkey": HOTKEY_SS58,
                 "netuid": NETUID,
-                "amount_staked": int(AMOUNT_RAO or 0),
-                "limit_price": LIMIT_PRICE,
-                "allow_partial": ALLOW_PARTIAL,
+                "amount_unstaked": int(AMOUNT_RAO or 0),
             },
         )
         inner = runtime_call_bytes(call)
