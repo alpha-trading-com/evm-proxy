@@ -62,9 +62,7 @@ def proxy_call_with_runtime_call(
     proxy_type: int,
     runtime_call: Any,
     real_ss58: SS58,
-    gas: int = 2_000_000,
     contract=None,
-    verbose: bool = True,
 ) -> TxReceipt:
     """
     Submit ``DelegateProxyCaller.proxyCall`` using SCALE-encoded inner call / extrinsic payload.
@@ -92,17 +90,11 @@ def proxy_call_with_runtime_call(
         {
             "from": account.address,
             "nonce": w3.eth.get_transaction_count(account.address),
-            "gas": int(gas),
+            "gas": int(2000000),
             "gasPrice": w3.eth.gas_price,
         }
     )
     signed = account.sign_transaction(tx)
     tx_hash = w3.eth.send_raw_transaction(signed.raw_transaction)
-    if verbose:
-        print(f"proxyCall transaction hash: {tx_hash.hex()}")
     receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
-    if verbose:
-        print(
-            f"Transaction confirmed in block: {receipt.blockNumber}, status={receipt.status}"
-        )
     return receipt

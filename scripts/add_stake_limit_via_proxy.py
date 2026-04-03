@@ -2,31 +2,13 @@
 """
 Submit SubtensorModule::add_stake_limit through DelegateProxyCaller.proxyCall (EVM).
 
-Prerequisites:
-  - DelegateProxyCaller deployed; real account (delegator) added the contract as a proxy
-    with a proxy type compatible with staking (often `Staking`).
-  - PRIVATE_KEY is the contract owner (Solidity onlyOwner).
+Edit the ``add_stake_limit`` block below, then run (no CLI args).
 
-Env:
-  RPC_URL                    — EVM HTTP(S) endpoint
-  PRIVATE_KEY                — Owner EVM key (signs proxyCall)
-  SUBTENSOR_CHAIN_ENDPOINT   — Optional; defaults to RPC_URL (WebSocket / chain URL for metadata)
-
-CLI:
-  --delegator SS58           — Real account on whose behalf the call runs (default: DELEGATE_SS58)
-  --hotkey SS58              — Validator hotkey
-  --netuid N
-  --tao AMOUNT               — Stake amount in TAO (mutually exclusive with --rao)
-  --rao AMOUNT               — Stake amount in rao
-  --limit-price P            — add_stake_limit limit_price (default 0)
-  --allow-partial            — pass allow_partial=True
-  --proxy-type NAME          — ProxyType name for precompile (default: Staking)
-  --proxy-type-u8 N          — Override enum byte (skips name resolution)
-  --contract ADDR            — Override deployment.json contract address
-  --gas G                    — Gas limit (default 2_000_000)
+Env (e.g. ``.env``):
+  RPC_URL, PRIVATE_KEY, DELEGATE_SS58
+  SUBTENSOR_CHAIN_ENDPOINT — optional; defaults to RPC_URL
 """
 
-import argparse
 import os
 import sys
 
@@ -44,10 +26,31 @@ from bittensor import Balance
 
 from evm.contract import load_deployment_info
 from evm.delegate_proxy import get_contract, proxy_call_with_runtime_call
-from utils.proxy_type_u8 import resolve_proxy_type_u8
 from utils.substrate_runtime_call import runtime_call_bytes
 
 load_dotenv(os.path.join(_root, ".env"))
+
+# ---------------------------------------------------------------------------
+# add_stake_limit — edit these
+# ---------------------------------------------------------------------------
+HOTKEY_SS58 = ""  # validator hotkey SS58
+NETUID = 1
+
+# Set exactly one of AMOUNT_TAO or AMOUNT_RAO (or set AMOUNT_RAO via env STAKE_RAO)
+AMOUNT_TAO: float | None = None
+AMOUNT_RAO: int | None = None
+
+LIMIT_PRICE = 0
+ALLOW_PARTIAL = False
+
+# Proxy precompile: name (e.g. Staking) or set PROXY_TYPE_U8 to skip name lookup
+PROXY_TYPE = "Staking"
+PROXY_TYPE_U8: int | None = None
+
+GAS = 2_000_000
+# None → use deployment.json contract_address
+CONTRACT_ADDRESS: str | None = None
+# ---------------------------------------------------------------------------
 
 
 def _subtensor_from_env() -> bt.Subtensor:
@@ -58,63 +61,47 @@ def _subtensor_from_env() -> bt.Subtensor:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="add_stake_limit via DelegateProxyCaller.proxyCall"
-    )
-    parser.add_argument(
-        "--delegator",
-        type=str,
-        default=os.getenv("DELEGATE_SS58", "").strip() or None,
-        help="Real account SS58 (default: DELEGATE_SS58)",
-    )
-    parser.add_argument("--hotkey", type=str, required=True)
-    parser.add_argument("--netuid", type=int, required=True)
-    g = parser.add_mutually_exclusive_group(required=True)
-    g.add_argument("--tao", type=float, help="Amount in TAO")
-    g.add_argument("--rao", type=int, help="Amount in rao")
-    parser.add_argument("--limit-price", type=int, default=0)
-    parser.add_argument("--allow-partial", action="store_true")
-    parser.add_argument(
-        "--proxy-type",
-        type=str,
-        default="Staking",
-        help="ProxyType name for forceProxyType (default: Staking)",
-    )
-    parser.add_argument(
-        "--proxy-type-u8",
-        type=int,
-        default=None,
-        help="Override proxy type discriminant byte",
-    )
-    parser.add_argument("--contract", type=str, default=None)
-    parser.add_argument("--gas", type=int, default=2_000_000)
+    delegator = os.getenv("DELEGATE_SS58", "").strip()
+    if not delegator:
+        raise SystemExit("Set DELEGATE_SS58 in the environment")
 
-    args = parser.parse_args()
+    hotkey = HOTKEY_SS58.strip() or os.getenv("STAKE_HOTKEY", "").strip()
+    if not hotkey:
+        raise SystemExit("Set HOTKEY_SS58 in this script or STAKE_HOTKEY in the environment")
 
-    if not args.delegator:
-        parser.error("Set --delegator or DELEGATE_SS58")
+    netuid = int(os.getenv("STAKE_NETUID", str(NETUID)))
+
+    amount_rao: int
+    if os.getenv("STAKE_RAO"):
+        amount_rao = int(os.getenv("STAKE_RAO", "0"))
+    elif AMOUNT_TAO is not None:
+        amount_rao = Balance.from_tao(AMOUNT_TAO).rao
+    elif AMOUNT_RAO is not None:
+        amount_rao = int(AMOUNT_RAO)
+    else:
+        raise SystemExit("Set AMOUNT_TAO or AMOUNT_RAO in this script, or STAKE_RAO in the environment")
+
+    limit_price = int(os.getenv("STAKE_LIMIT_PRICE", str(LIMIT_PRICE)))
+    allow_partial = os.getenv("STAKE_ALLOW_PARTIAL", "").lower() in (
+        "1",
+        "true",
+        "yes",
+    ) or ALLOW_PARTIAL
+
+    contract_override = os.getenv("STAKE_CONTRACT") or CONTRACT_ADDRESS
 
     rpc_url = os.getenv("RPC_URL", "https://test.finney.opentensor.ai/")
     private_key = os.getenv("PRIVATE_KEY")
     if not private_key:
         raise SystemExit("PRIVATE_KEY is required")
 
-    if args.tao is not None:
-        amount_rao = Balance.from_tao(args.tao).rao
-    else:
-        amount_rao = int(args.rao)
-
-    proxy_kw: int | str = (
-        int(args.proxy_type_u8) if args.proxy_type_u8 is not None else args.proxy_type
-    )
-
     w3 = Web3(Web3.HTTPProvider(rpc_url))
     if not w3.is_connected():
         raise SystemExit(f"EVM RPC failed: {rpc_url}")
 
     account = Account.from_key(private_key)
-    if args.contract:
-        contract_address = Web3.to_checksum_address(args.contract)
+    if contract_override:
+        contract_address = Web3.to_checksum_address(contract_override.strip())
         abi = None
     else:
         dep = load_deployment_info()
@@ -125,36 +112,29 @@ def main() -> None:
 
     print("Connecting Subtensor to compose add_stake_limit …")
     subtensor = _subtensor_from_env()
-    try:
-        call = subtensor.substrate.compose_call(
-            call_module="SubtensorModule",
-            call_function="add_stake_limit",
-            call_params={
-                "hotkey": args.hotkey,
-                "netuid": args.netuid,
-                "amount_staked": int(amount_rao),
-                "limit_price": int(args.limit_price),
-                "allow_partial": bool(args.allow_partial),
-            },
-        )
-        inner = runtime_call_bytes(call)
-        pt = resolve_proxy_type_u8(subtensor, proxy_kw)
-        receipt = proxy_call_with_runtime_call(
-            w3,
-            account,
-            contract_address,
-            proxy_type=pt,
-            runtime_call=inner,
-            real_ss58=args.delegator,
-            gas=args.gas,
-            contract=contract,
-            verbose=True,
-        )
-    finally:
-        subtensor.close()
-    if receipt.status != 1:
-        raise SystemExit("Transaction reverted")
-
+    call = subtensor.substrate.compose_call(
+        call_module="SubtensorModule",
+        call_function="add_stake_limit",
+        call_params={
+            "hotkey": hotkey,
+            "netuid": netuid,
+            "amount_staked": int(amount_rao),
+            "limit_price": limit_price,
+            "allow_partial": bool(allow_partial),
+        },
+    )
+    inner = runtime_call_bytes(call)
+    pt = 0
+    receipt = proxy_call_with_runtime_call(
+        w3,
+        account,
+        contract_address,
+        proxy_type=pt,
+        runtime_call=inner,
+        real_ss58=delegator,
+        contract=contract,
+    )
+    p
 
 if __name__ == "__main__":
     main()
