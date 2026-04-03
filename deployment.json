@@ -1,0 +1,67 @@
+{
+  "contract_address": "0xB08e640fA126A3260fBfAE6E47B26b8658F1D201",
+  "contract_ss58": "5FaqtwgVqiCx75APsfWkvJWmy4eNP32T4A6ko8PQ6B3MS93B",
+  "principal_ss58": "5DLXqvT8opsF8foDRZY8X7siJ87Y9Hgf8izukV1WHqNVM4Fh",
+  "proxy_type": "Any",
+  "proxy_delay": 0,
+  "deployer_evm": "0x03E60e331D331e687C8Fa055c40B85D8cBCC4f72",
+  "evm_tx": "c1702fff8281e5b10cd8eaeb8cf94a959710ae1f560ad418f24ccaffef720489",
+  "chain_id": 964,
+  "abi": [
+    {
+      "inputs": [],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "inputs": [],
+      "name": "OnlyOwner",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "ProxyCallFailed",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "realAccountId32",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "uint8",
+          "name": "proxyType",
+          "type": "uint8"
+        },
+        {
+          "internalType": "bytes",
+          "name": "call",
+          "type": "bytes"
+        }
+      ],
+      "name": "proxyCall",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "stateMutability": "payable",
+      "type": "receive"
+    }
+  ]
+}
