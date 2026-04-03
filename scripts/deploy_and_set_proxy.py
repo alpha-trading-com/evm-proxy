@@ -58,41 +58,6 @@ def _load_deploy_module():
     return mod
 
 
-def _substrate_pubkey_hex(subtensor: bt.Subtensor, ss58: str) -> str:
-    return subtensor.substrate.ss58_decode(ss58)
-
-
-def _load_delegate_wallet(subtensor: bt.Subtensor, expected_principal_ss58: str) -> bt.Wallet:
-    mnemonic = os.getenv("DELEGATE_COLDKEY_MNEMONIC")
-    seed_hex = os.getenv("DELEGATE_COLDKEY_SEED_HEX")
-    uri = os.getenv("DELEGATE_COLDKEY_URI")
-
-    if mnemonic or seed_hex or uri:
-        w = bt.Wallet(name="deploy_proxy_script", hotkey="deploy_proxy_script")
-        if mnemonic:
-            kp = BtKeypair.create_from_mnemonic(mnemonic.strip())
-        elif seed_hex:
-            kp = BtKeypair.create_from_seed(seed_hex.strip())
-        else:
-            kp = BtKeypair.create_from_uri(uri.strip())
-        w.set_coldkey(kp, encrypt=False, overwrite=True)
-    else:
-        name = os.getenv("BT_WALLET_NAME", "default")
-        hotkey = os.getenv("BT_WALLET_HOTKEY", "default")
-        w = bt.Wallet(name=name, hotkey=hotkey)
-        pwd = os.getenv("WALLET_PASSWORD") or None
-        w.get_coldkey(password=pwd)
-
-    if _substrate_pubkey_hex(subtensor, w.coldkey.ss58_address) != _substrate_pubkey_hex(
-        subtensor, expected_principal_ss58.strip()
-    ):
-        raise ValueError(
-            "Signing coldkey does not match DELEGATE_SS58 "
-            f"(wallet {w.coldkey.ss58_address} vs env {expected_principal_ss58.strip()})"
-        )
-    return w
-
-
 def main() -> None:
     delegate_ss58 = os.getenv("DELEGATE_SS58")
     if not delegate_ss58 or not delegate_ss58.strip():
@@ -110,7 +75,8 @@ def main() -> None:
 
     print(f"Connecting Subtensor to {subtensor_url!r} …")
     subtensor = bt.Subtensor(network=subtensor_url)
-    wallet = _load_delegate_wallet(subtensor, delegate_ss58)
+    wallet = bt.Wallet(name=os.getenv("DELEGATE_WALLET_NAME"))
+    wallet.unlock_coldkey()
 
     print(f"Principal (DELEGATE_SS58): {delegate_ss58.strip()}")
     print("Removing existing proxies …")

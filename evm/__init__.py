@@ -20,7 +20,6 @@ from evm.contract import (
     load_deployment_info,
     get_contract,
 )
-from utils.proxy_type_u8 import resolve_proxy_type_u8
 from evm.delegate_proxy import (
     CONTRACT_ABI,
     proxy_call_with_runtime_call,
@@ -43,5 +42,4 @@ __all__ = [
     "get_contract",
     "CONTRACT_ABI",
     "proxy_call_with_runtime_call",
-    "resolve_proxy_type_u8",
 ]
