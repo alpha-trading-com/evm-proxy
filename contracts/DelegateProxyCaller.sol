@@ -16,6 +16,10 @@ contract DelegateProxyCaller {
         owner = msg.sender;
     }
 
+    /// @notice Accepts native TAO transfers (plain sends with no calldata).
+    receive() external payable {}
+
+
     modifier onlyOwner() {
         if (msg.sender != owner) revert OnlyOwner();
         _;
