@@ -2,6 +2,8 @@
 """
 Deploy the DelegateProxyCaller contract to the blockchain.
 Writes deployment.json with address, ABI, and metadata.
+
+Uses ``LegacyWebSocketProvider`` (see ``evm.web3_provider``); set ``RPC_URL`` or ``RPC_WS_URL``.
 """
 
 import os
@@ -15,6 +17,8 @@ from dotenv import load_dotenv
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
+
+from evm.web3_provider import web3_legacy_ws
 
 DELEGATE_PROXY_CALLER_ARTIFACT = os.path.join(
     PROJECT_ROOT, "artifacts", "contracts", "DelegateProxyCaller.sol", "DelegateProxyCaller.json"
@@ -74,12 +78,11 @@ def main():
     if not private_key:
         raise ValueError("PRIVATE_KEY environment variable is required")
     
-    # Connect to blockchain
-    w3 = Web3(Web3.HTTPProvider(rpc_url))
+    w3 = web3_legacy_ws(rpc_url)
     if not w3.is_connected():
-        raise ConnectionError(f"Failed to connect to {rpc_url}")
-    
-    print(f"Connected to {rpc_url}")
+        raise ConnectionError(f"Failed to connect (WebSocket) for {rpc_url!r}")
+
+    print(f"Connected via LegacyWebSocketProvider ({rpc_url!r})")
     print(f"Chain ID: {w3.eth.chain_id}")
     
     # Load account

@@ -4,7 +4,8 @@ Submit SubtensorModule::add_stake_limit through DelegateProxyCaller.proxyCall (E
 
 Edit the example ``add_stake_limit`` inputs below, then run (no CLI args).
 
-Env (``.env``): RPC_URL, PRIVATE_KEY, DELEGATE_SS58; optional SUBTENSOR_CHAIN_ENDPOINT.
+Env (``.env``): RPC_URL or RPC_WS_URL (WebSocket for EVM), PRIVATE_KEY, DELEGATE_SS58;
+optional SUBTENSOR_CHAIN_ENDPOINT.
 """
 
 import os
@@ -24,6 +25,7 @@ from bittensor import Balance
 
 from evm.contract import load_deployment_info
 from evm.delegate_proxy import get_contract, proxy_call_with_runtime_call
+from evm.web3_provider import web3_legacy_ws
 from utils.substrate_runtime_call import runtime_call_bytes
 
 load_dotenv(os.path.join(_root, ".env"))
@@ -46,9 +48,9 @@ def main() -> None:
     if not private_key:
         raise SystemExit("PRIVATE_KEY is required")
 
-    w3 = Web3(Web3.HTTPProvider(rpc_url))
+    w3 = web3_legacy_ws(rpc_url)
     if not w3.is_connected():
-        raise SystemExit(f"EVM RPC failed: {rpc_url}")
+        raise SystemExit(f"EVM WebSocket connection failed for {rpc_url!r}")
 
     account = Account.from_key(private_key)
     dep = load_deployment_info()

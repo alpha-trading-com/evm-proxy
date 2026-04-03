@@ -10,7 +10,7 @@ Steps:
 4. Add proxy: principal = DELEGATE_SS58, delegate = contract SS58 (Blake2 evm: + H160).
 
 Env (see .env):
-  RPC_URL                  — EVM JSON-RPC (HTTP/S).
+  RPC_URL / RPC_WS_URL     — EVM endpoint; Web3 uses LegacyWebSocketProvider (``wss://``; ``https`` URLs are rewritten).
   PRIVATE_KEY              — Secp256k1 hex for contract deployment.
   DELEGATE_SS58            — Principal SS58 whose Proxy entries are cleared/replaced.
 
@@ -44,6 +44,7 @@ from eth_account import Account
 from web3 import Web3
 
 from evm.address import h160_to_ss58
+from evm.web3_provider import web3_legacy_ws
 from utils.proxy_extrinisic import (
     add_proxy_extrinsic,
     remove_all_proxies_for_principal,
@@ -89,9 +90,9 @@ def main() -> None:
     )
 
     deploy_mod = _load_deploy_module()
-    w3 = Web3(Web3.HTTPProvider(rpc_evm))
+    w3 = web3_legacy_ws(rpc_evm)
     if not w3.is_connected():
-        raise ConnectionError(f"EVM: failed to connect to {rpc_evm}")
+        raise ConnectionError(f"EVM: failed to connect (WebSocket) for {rpc_evm!r}")
 
     account = Account.from_key(private_key)
     artifact_path = deploy_mod.DELEGATE_PROXY_CALLER_ARTIFACT

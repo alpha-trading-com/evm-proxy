@@ -23,6 +23,7 @@ from dotenv import load_dotenv
 
 from evm.contract import load_deployment_info
 from evm.delegate_proxy import get_contract, proxy_call_with_runtime_call
+from evm.web3_provider import web3_legacy_ws
 
 load_dotenv()
 
@@ -52,10 +53,9 @@ def main():
     if not private_key:
         raise ValueError("PRIVATE_KEY environment variable is required")
     
-    # Connect to blockchain
-    w3 = Web3(Web3.HTTPProvider(rpc_url))
+    w3 = web3_legacy_ws(rpc_url)
     if not w3.is_connected():
-        raise ConnectionError(f"Failed to connect to {rpc_url}")
+        raise ConnectionError(f"Failed to connect (WebSocket) for {rpc_url!r}")
     
     # Load account
     account = Account.from_key(private_key)
