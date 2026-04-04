@@ -1,24 +1,27 @@
 """Stake/unstake amount resolution and EVM stake calls. Depends on subtensor for chain state."""
 import os
-
+import sys
 from web3 import Web3
 
 from app.globals import get_coldkey_ss58, get_subtensor
 from app.services.evm_service import get_w3_account_contract, receipt_to_dict, run_quiet
 from app.services.evm import stake, stake_limit, remove_stake, remove_stake_limit, move_stake
 from utils.tolerance import calculate_stake_limit_price, calculate_unstake_limit_price
+from app.core.config import settings
 
 
 def resolve_remove_stake_amount(
     hotkey: str, netuid: int, amount: float | None
 ) -> int:
     """Convert remove_stake amount (None = all, 0<x<1 = fraction) to alpha rao."""
-    coldkey_ss58 = get_coldkey_ss58()
+    coldkey_ss58 = settings.REAL_ACCOUNT_SS58
     subtensor = get_subtensor()
+    print(amount, file=sys.stdout)
     if amount is None:
         return 0
     if 0 < amount < 1:
         stake_balance = subtensor.get_stake(coldkey_ss58=coldkey_ss58, hotkey_ss58=hotkey, netuid=netuid)
+        print(stake_balance, file=sys.stdout)
         return int(amount * stake_balance.rao)
     return int(amount * 10**9)
 
@@ -27,7 +30,7 @@ def resolve_remove_stake_limit_amounts(
     hotkey: str, netuid: int, amount: float | None
 ) -> tuple[int, float]:
     """Return (amount_alpha_rao, amount_tao) for remove_stake_limit."""
-    coldkey_ss58 = get_coldkey_ss58()
+    coldkey_ss58 = settings.REAL_ACCOUNT_SS58
     subtensor = get_subtensor()
     if amount is None:
         stake_balance = subtensor.get_stake(coldkey_ss58=coldkey_ss58, hotkey_ss58=hotkey, netuid=netuid)
@@ -42,7 +45,7 @@ def resolve_move_stake_amount(
     origin_hotkey: str, origin_netuid: int, amount_tao: float | None
 ) -> int:
     """Convert move_stake amount (None = all, 0<x<1 = fraction) to rao."""
-    coldkey_ss58 = get_coldkey_ss58()
+    coldkey_ss58 = settings.REAL_ACCOUNT_SS58
     subtensor = get_subtensor()
     if amount_tao is None:
         stake_balance = subtensor.get_stake(
