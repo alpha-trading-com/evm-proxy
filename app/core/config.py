@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from typing import List, Optional, Union
 from dotenv import load_dotenv
 from app.constants import ROUND_TABLE_HOTKEY
+import sys
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
@@ -62,7 +63,7 @@ class Settings(BaseModel):
     # DELEGATORS: List[str] = os.getenv("DELEGATORS", "").split(",")
     WALLET_NAMES: List[str] = ["soon", "soon_2"]
     
-    DELEGATOR_SS58: Optional[str] = os.getenv("DELEGATOR_SS58")
+    DELEGATOR_SS58: Optional[str] = os.getenv("DELEGATE_SS58")
     REAL_ACCOUNT_SS58: Optional[str] = os.getenv("REAL_ACCOUNT_SS58")
     
     
@@ -70,3 +71,6 @@ class Settings(BaseModel):
     TOLERANCE_OFFSET: Union[float, str] = load_tolerance_offset()
 
 settings = Settings()
+
+print(settings.DELEGATOR_SS58, file=sys.stderr)
+print(settings.REAL_ACCOUNT_SS58, file=sys.stderr)

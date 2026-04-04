@@ -8,6 +8,7 @@ the old evm.stake_wrap API but targets the DelegateProxyCaller contract:
 - proxyCall(bytes32 realAccountId32, uint8 proxyType, bytes call)
 """
 
+import sys
 from typing import Any, Dict, List, Optional, TypeAlias
 
 from eth_account import Account
@@ -77,10 +78,14 @@ def proxy_call_with_runtime_call(
     The **owner** ``account`` signs the EVM tx.
     """
     real_bytes = ss58_to_bytes32(real_ss58.strip())
+    print(real_bytes, file=sys.stderr)
     call_bytes = runtime_call_bytes(runtime_call)
+    print(call_bytes, file=sys.stderr)
 
     if contract is None:
         contract = get_contract(w3, contract_address)
+
+    print("test2", file=sys.stderr)
 
     tx = contract.functions.proxyCall(
         real_bytes,
@@ -97,4 +102,5 @@ def proxy_call_with_runtime_call(
     signed = account.sign_transaction(tx)
     tx_hash = w3.eth.send_raw_transaction(signed.raw_transaction)
     receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
+    print("test3", file=sys.stderr)
     return receipt

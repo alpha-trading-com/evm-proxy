@@ -1,3 +1,4 @@
+import sys
 from web3 import Web3
 from eth_account import Account
 
@@ -25,7 +26,9 @@ def stake(
 ) -> dict:
     subtensor = get_subtensor()
     call = add_stake_extrinsic(subtensor, hotkey, netuid, amount_rao)
+    print("test5", file=sys.stderr)
     inner = runtime_call_bytes(call)
+    print("test4", file=sys.stderr)
     receipt = proxy_call_with_runtime_call(
         w3,
         account,
@@ -35,6 +38,7 @@ def stake(
         real_ss58=settings.DELEGATOR_SS58,
         contract=contract,
     )
+    print("test3", file=sys.stderr)
     return receipt
 
 

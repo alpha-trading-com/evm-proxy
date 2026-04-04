@@ -1,4 +1,5 @@
 import bittensor as bt
+import sys
 from app.core.config import settings
 
 def proxy_call_extrinsic(
@@ -24,6 +25,10 @@ def add_stake_extrinsic(
     netuid: int,
     amount: int,
 ) -> dict:
+    print("test1", file=sys.stderr)
+    print(hotkey, file=sys.stderr)
+    print(netuid, file=sys.stderr)
+    print(amount, file=sys.stderr)
     call = subtensor.substrate.compose_call(
         call_module='SubtensorModule',
         call_function='add_stake',
@@ -39,6 +44,7 @@ def add_stake_extrinsic(
         call,
         proxy_type="Staking",
     )
+    print("test2", file=sys.stderr)
     return proxied_call
 
 def add_stake_limit_extrinsic(
