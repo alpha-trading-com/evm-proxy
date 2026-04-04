@@ -9,7 +9,7 @@ Structure:
     main.py         – bootstrap, routers
     globals.py      – subtensor, w3/contract cache
     services/       – evm, stake, tolerance calc, stake_info
-    routers/        – ui, status, stake, tolerance, stake_info, tolerance_offset
+    routers/        – ui, stake, tolerance, stake_info, tolerance_offset
 """
 import os
 import sys
@@ -25,12 +25,11 @@ load_dotenv(REPO_ROOT / ".env")
 
 from fastapi import FastAPI
 
-from app.routers import ui, status, stake, tolerance, stake_info, tolerance_offset
+from app.routers import ui, stake, tolerance, stake_info, tolerance_offset
 
 app = FastAPI(title="StakeWrap Control", version="1.0.0")
 
 app.include_router(ui.router)
-app.include_router(status.router)
 app.include_router(stake.router)
 app.include_router(tolerance.router)
 app.include_router(stake_info.router)
