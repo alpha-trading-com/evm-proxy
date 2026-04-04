@@ -179,11 +179,11 @@
 
       <section class="panel" id="panel-remove">
         <h2>Unstake</h2>
-        <small class="hint">Remove stake (market) or unstake limit order. Amount in raw alpha units (integer). Leave amount empty to unstake all.</small>
+        <small class="hint">Leave amount empty to unstake all. Use a fraction between 0 and 1 (e.g. 0.5 = half). Otherwise enter an amount in TAO (converted on the server).</small>
         <label style="margin-top: 0.5rem;">
           <input id="rs-not-limited" type="checkbox" checked /> Not limited (market order)
         </label>
-        <label>Amount (integer, alpha raw units)</label>
+        <label>Amount (empty = all, or 0–1 = fraction, or TAO)</label>
         <input id="rs-amount" type="number" placeholder="e.g. 100000000 (empty = all)" />
         <label>Netuid</label>
         <div class="amount-input-row">
@@ -537,19 +537,28 @@
         showResult('stake-result', false, String(e));
       }
     }
+    function parseOptionalUnstakeAmount(resultId) {
+      const raw = document.getElementById('rs-amount').value.trim();
+      if (raw === '') return { ok: true, value: null };
+      const x = parseFloat(raw);
+      if (!Number.isFinite(x)) {
+        showResult(resultId, false, 'Invalid amount');
+        return { ok: false };
+      }
+      return { ok: true, value: x };
+    }
     function postRemoveStakeOrLimit() {
       const notLimited = document.getElementById('rs-not-limited').checked;
+      const parsed = parseOptionalUnstakeAmount('rs-result');
+      if (!parsed.ok) return;
+      const amount = parsed.value;
       if (notLimited) {
-        const amountValue = document.getElementById('rs-amount').value.trim();
-        const amount = amountValue === '' ? null : parseInt(amountValue, 10);
         postJson('/api/remove-stake', {
           hotkey: document.getElementById('rs-hotkey').value.trim(),
           netuid: parseInt(document.getElementById('rs-netuid').value, 10),
           amount: amount,
         }, 'rs-result');
       } else {
-        const amountVal = document.getElementById('rs-amount').value.trim();
-        const amount = amountVal === '' ? 0 : parseInt(amountVal, 10);
         postJson('/api/remove-stake-limit', {
           hotkey: document.getElementById('rs-hotkey').value.trim(),
           netuid: parseInt(document.getElementById('rs-netuid').value, 10),
@@ -561,23 +570,29 @@
       }
     }
     function postRemoveStake() {
-      const amountValue = document.getElementById('rs-amount').value.trim();
-      const amount = amountValue === '' ? null : parseInt(amountValue, 10);
+      const parsed = parseOptionalUnstakeAmount('rs-result');
+      if (!parsed.ok) return;
       postJson('/api/remove-stake', {
         hotkey: document.getElementById('rs-hotkey').value.trim(),
         netuid: parseInt(document.getElementById('rs-netuid').value, 10),
-        amount: amount,
+        amount: parsed.value,
       }, 'rs-result');
     }
     async function calcMinToleranceUnstake() {
-      const amountVal = document.getElementById('rs-amount').value.trim();
-      const amount = amountVal === '' ? 0 : parseInt(amountVal, 10);
-      const netuid = parseInt(document.getElementById('rs-netuid').value, 10);
-      if (!amount || !netuid) {
-        showResult('rs-result', false, 'Please enter amount and Netuid');
+      const parsed = parseOptionalUnstakeAmount('rs-result');
+      if (!parsed.ok) return;
+      if (parsed.value === null) {
+        showResult('rs-result', false, 'Enter an amount (or use empty + market unstake for unstake all).');
         return;
       }
-      const amount_tao = amount / 1e9;  // Convert alpha raw to TAO
+      const amount = parsed.value;
+      const netuid = parseInt(document.getElementById('rs-netuid').value, 10);
+      if (!Number.isFinite(amount) || amount <= 0 || Number.isNaN(netuid)) {
+        showResult('rs-result', false, 'Please enter a valid amount and Netuid (netuid may be 0).');
+        return;
+      }
+      // Large values = alpha rao; smaller = TAO (matches server heuristics for mixed UI input)
+      const amount_tao = amount >= 1e6 ? amount / 1e9 : amount;
       showResult('rs-result', false, 'Calculating...');
       try {
         const r = await fetch('/api/calc-min-tolerance', {
