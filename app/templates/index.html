@@ -31,15 +31,6 @@
     .main-left { flex: 1; min-width: 0; }
     .main-left h2 { font-size: 1.25rem; margin: 0 0 1rem 0; }
     .stake-info-panel,
-    .special-ops-panel {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 1.5rem;
-    }
-    .special-ops-panel { margin-top: 1.25rem; }
-    .special-ops-panel h2 { margin-top: 0; }
-    .special-ops-panel .submit { margin-top: 0.75rem; }
     .main-right { flex: 1; min-width: 0; }
     .tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
     .tabs button {
@@ -139,7 +130,6 @@
     <div class="main-split">
       <div class="main-left">
         <div id="evm-staking-gate-banner" class="result err" style="display: none; margin-bottom: 1rem;"></div>
-        <div id="executor-fast-banner" class="result err" style="display: none; margin-bottom: 1rem;"></div>
         <h1>🔐 StakeWrap Control</h1>
         <div class="tabs" id="tabs"></div>
 
@@ -224,21 +214,6 @@
         <div id="rs-result"></div>
       </section>
 
-      <section class="panel" id="panel-transfer">
-        <h2>Transfer Stake</h2>
-        <small class="hint">Transfer stake to the predefined allowed coldkey only. Leave amount empty to transfer the full stake on the origin netuid.</small>
-        <label>Amount (TAO)</label>
-        <input id="ts-amount" type="number" step="any" placeholder="e.g. 0.1 — empty = transfer all" />
-        <label>Origin Netuid</label>
-        <input id="ts-origin" type="number" value="1" />
-        <label>Destination Netuid</label>
-        <input id="ts-dest" type="number" value="1" />
-        <label>Hotkey</label>
-        <input id="ts-hotkey" placeholder="5... or 0x..." value="5Gq2gs4ft5dhhjbHabvVbAhjMCV2RgKmVJKAFCUWiirbRT21" />
-        <button type="button" id="btn-evm-transfer-submit" class="submit" onclick="postTransferStake()">Submit Transfer Stake</button>
-        <div id="ts-result"></div>
-      </section>
-
       <section class="panel" id="panel-move">
         <h2>Move Stake</h2>
         <small class="hint">Move stake between different hotkeys. Leave amount empty to move all (alpha).</small>
@@ -256,77 +231,10 @@
         <div id="ms-result"></div>
       </section>
 
-      <section class="panel" id="panel-withdraw">
-        <h2>Withdraw TAO</h2>
-        <small class="hint">Withdraw TAO from the contract (owner only). Leave amount empty to withdraw the full contract balance.</small>
-        <label>Amount (TAO)</label>
-        <input id="wd-amount" type="number" step="any" placeholder="e.g. 0.1 — empty = withdraw all" />
-        <button class="submit" onclick="postWithdraw()">Submit Withdraw</button>
-        <div id="wd-result"></div>
-      </section>
-
-      <section class="panel" id="panel-fast-stake">
-        <h2>Fast Stake</h2>
-        <small class="hint">Stake via MevShield (Bittensor extrinsic). Requires Executor ON (Settings). Uncheck "Not limited" for limit order.</small>
-        <label style="margin-top: 0.5rem;">
-          <input id="fs-not-limited" type="checkbox" checked /> Not limited (market order)
-        </label>
-        <label>Amount (TAO)</label>
-        <div class="amount-input-row">
-          <input id="fs-amount" type="number" step="any" placeholder="e.g. 0.1" />
-          <div class="amount-presets-row">
-            <button type="button" class="amount-preset-btn" onclick="setFastStakeAmount(300)">300</button>
-            <button type="button" class="amount-preset-btn" onclick="setFastStakeAmount(250)">250</button>
-            <button type="button" class="amount-preset-btn" onclick="setFastStakeAmount(200)">200</button>
-            <button type="button" class="amount-preset-btn" onclick="setFastStakeAmount(150)">150</button>
-            <button type="button" class="amount-preset-btn" onclick="setFastStakeAmount(100)">100</button>
-            <button type="button" class="amount-preset-btn" onclick="setFastStakeAmount(50)">50</button>
-            <button type="button" class="amount-preset-btn" onclick="setFastStakeAmount(30)">30</button>
-          </div>
-        </div>
-        <label>Netuid</label>
-        <div class="amount-input-row">
-          <input id="fs-netuid" type="number" value="1" style="max-width: 8rem;" />
-          <button id="btn-fast-stake" class="submit" onclick="postFastStakeOrLimit()" style="margin-top: 0;">Submit Fast Stake</button>
-        </div>
-        <div id="fast-stake-limit-options" style="display: none;">
-          <div class="stake-limit-row" style="display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; margin-top: 0.5rem;">
-            <label style="margin: 0; display: flex; align-items: center; gap: 0.35rem;">
-              <span>Rate Tolerance</span>
-              <input id="fsl-tolerance" type="number" step="any" value="0.5" placeholder="e.g. 0.5" style="width: 5rem; margin: 0;" />
-            </label>
-            <small class="hint" style="margin: 0;">Ignored when "Use Minimum Tolerance" is checked</small>
-            <label style="margin: 0;">
-              <input id="fsl-use-min" type="checkbox" /> Use Minimum Tolerance
-            </label>
-            <button type="button" class="refresh-btn" style="margin: 0;" onclick="calcMinToleranceFastStake()">Calculate Min Tolerance</button>
-          </div>
-        </div>
-        <div id="fs-result"></div>
-      </section>
-
-      <section class="panel" id="panel-fast-unstake">
-        <h2>Fast Unstake</h2>
-        <small class="hint">Unstake via MevShield (Bittensor extrinsic). Requires Executor ON (Settings). Unstakes all for the given netuid.</small>
-        <label>Netuid</label>
-        <input id="fu-netuid" type="number" value="1" />
-        <button id="btn-fast-unstake" class="submit" onclick="postFastUnstake()">Submit Fast Unstake</button>
-        <div id="fu-result"></div>
-      </section>
-
       <section class="panel" id="panel-settings">
         <h2>Settings</h2>
 
-        <h3 style="margin: 0 0 0.5rem 0; font-size: 1.05rem; color: var(--muted);">Executor / heartbeat</h3>
-        <small class="hint">Single switch in executor_enabled.json. When OFF, auto-execute scripts skip submissions.</small>
-        <label style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem;">
-          <input id="settings-executor-enabled" type="checkbox" onchange="saveExecutorEnabled(this.checked)" />
-          <span id="settings-executor-label">Executor ON</span>
-        </label>
-        <div id="settings-executor-msg" class="hint" style="margin-top: 0.35rem;"></div>
-        <div id="settings-executor-result" class="result" style="display: none;"></div>
-
-        <h3 style="margin: 1.25rem 0 0.5rem 0; font-size: 1.05rem; color: var(--muted);">Contract config</h3>
+        <h3 style="margin: 0 0 0.5rem 0; font-size: 1.05rem; color: var(--muted);">Contract config</h3>
         <small class="hint">Read-only values from the deployed StakeWrap contract.</small>
         <button type="button" class="refresh-btn" onclick="loadContractConfig()" style="margin-top: 0.5rem;">Refresh</button>
         <div id="contract-config-container" class="wallet-footer" style="margin-top: 0.75rem;">
@@ -351,7 +259,7 @@
           </ul>
         </div>
         <small class="hint">Gate password is never sent to this app’s server. Use an <strong>Ethereum (ETH) account in Talisman</strong> (Add account → Ethereum); Substrate-only accounts will not expose an EVM provider. We detect <code>window.talismanEth</code>, <code>window.ethereum</code>, multi-wallet <code>ethereum.providers</code>, and EIP-6963. Match the chain to this deployment, then sign in the extension.</small>
-        <small class="hint" style="margin-top: 0.35rem;">Blocks EVM stake, unstake, transfer/move stake, and <code>execute()</code> staking. Withdraw and Fast Stake/Unstake are not blocked by this flag.</small>
+        <small class="hint" style="margin-top: 0.35rem;">When disabled, blocks EVM stake, unstake, and move stake for this contract (if the contract implements the gate).</small>
         <div style="margin-top: 0.75rem;">
           <button type="button" class="submit" onclick="stakingGateConnectWallet()">Connect owner wallet</button>
           <button type="button" class="refresh-btn" onclick="stakingGateShowDebug()" style="margin-left: 0.5rem;">Wallet debug</button>
@@ -387,22 +295,9 @@
             <div class="loading">Click <strong>Refresh</strong> above to load stake info.</div>
           </div>
           <div class="subnet-buttons">
-            <div class="subnet-buttons-title">Subnet ID (click to set Stake / Unstake / Fast Stake / Fast Unstake)</div>
+            <div class="subnet-buttons-title">Subnet ID (click to set Stake / Unstake netuid)</div>
             <div class="subnet-grid" id="subnet-grid"></div>
           </div>
-        </div>
-        <div class="special-ops-panel">
-          <h2>Special operations</h2>
-          <small class="hint" style="margin-top: 0;">One-click actions that bypass the Stake tab fields. Same auth and contract rules as normal staking.</small>
-          <button type="button" id="btn-stake-all-sn28" class="submit" onclick="postStakeLimitAllSn28()" style="background: #6366f1;">
-            Stake all free TAO → SN28 (limit, min tolerance, default hotkey)
-          </button>
-          <small class="hint">EVM StakeWrap stake-limit. Uses the contract coldkey balance (same basis as server <code>compute_contract_stake_all_amount_rao</code>), netuid 28, default hotkey, minimum tolerance, no partial fill.</small>
-          <button type="button" id="btn-fast-stake-all-sn28" class="submit" onclick="postFastStakeLimitAllSn28()" style="margin-top: 1rem; background: #7c3aed;">
-            Fast stake all TAO → SN28 (limit, min tolerance)
-          </button>
-          <small class="hint">MevShield / Bittensor extrinsic (same encoded amount as above). Requires <strong>Executor ON</strong> and contract staking enabled; delegates must have funds for <code>execute()</code>.</small>
-          <div id="special-ops-result"></div>
         </div>
       </div>
       
@@ -670,7 +565,7 @@
     function applyEvmStakingGateUi(j) {
       if (!j || j.ok !== true) return;
       window.evmStakingBlocked = j.staking_unstaking_enabled === false;
-      ['btn-evm-stake-submit', 'btn-evm-unstake-submit', 'btn-evm-move-submit', 'btn-stake-all-sn28'].forEach(id => {
+      ['btn-evm-stake-submit', 'btn-evm-unstake-submit', 'btn-evm-move-submit'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.disabled = window.evmStakingBlocked;
       });
@@ -678,7 +573,7 @@
       if (ban) {
         if (j.staking_unstaking_enabled === false) {
           ban.style.display = 'block';
-          ban.textContent = 'Staking / unstaking / move stake are disabled on the contract. You can still use Transfer Stake and Withdraw. Fast Stake / Fast Unstake also require Executor ON when the contract allows staking.';
+          ban.textContent = 'Staking / unstaking / move stake are disabled on the contract (re-enable in Settings with gate password if your contract supports it).';
         } else {
           ban.style.display = 'none';
           ban.textContent = '';
@@ -688,50 +583,11 @@
       if (chk && j.staking_unstaking_enabled !== null && j.staking_unstaking_enabled !== undefined) {
         chk.checked = !!j.staking_unstaking_enabled;
       }
-      applyFastStakeExecutorUi();
-    }
-
-    /** Default true (matches server when executor_enabled.json is missing). */
-    window.executorEnabledForFast = true;
-
-    /** Fast Stake / Fast Unstake: only submit actions disabled when contract staking is off OR executor is OFF.
-     * Amount presets, inputs, and limit options stay enabled so you can fill the form; Submit still enforces the gate. */
-    function applyFastStakeExecutorUi() {
-      const contractOff = window.evmStakingBlocked === true;
-      const executorOff = window.executorEnabledForFast === false;
-      const fastBlocked = contractOff || executorOff;
-      ['btn-fast-stake', 'btn-fast-unstake', 'btn-fast-stake-all-sn28'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.disabled = fastBlocked;
-      });
-
-      const exBan = document.getElementById('executor-fast-banner');
-      if (exBan) {
-        if (executorOff && !contractOff) {
-          exBan.style.display = 'block';
-          exBan.textContent = 'Fast Stake and Fast Unstake are disabled because Executor is OFF. Turn Executor ON in Settings.';
-        } else {
-          exBan.style.display = 'none';
-          exBan.textContent = '';
-        }
-      }
     }
 
     function assertEvmStakingAllowed(resultId) {
       if (window.evmStakingBlocked) {
-        showResult(resultId, false, 'Contract staking/unstaking is disabled — only Transfer Stake and Withdraw are allowed (re-enable in Settings with gate password).');
-        return false;
-      }
-      return true;
-    }
-
-    function assertFastStakeUnstakeAllowed(resultId) {
-      if (window.executorEnabledForFast === false) {
-        showResult(resultId, false, 'Executor is OFF. Turn Executor ON in Settings to use Fast Stake / Fast Unstake.');
-        return false;
-      }
-      if (window.evmStakingBlocked) {
-        showResult(resultId, false, 'Contract staking/unstaking is disabled — Fast Stake / Fast Unstake are not available.');
+        showResult(resultId, false, 'Contract staking/unstaking is disabled — re-enable in Settings with gate password if your contract supports it.');
         return false;
       }
       return true;
@@ -741,20 +597,11 @@
 
     // List of all input/checkbox element ids to persist
     const PERSISTED_FIELDS = [
-      // Stake (merged with limit)
       "stake-hotkey", "stake-netuid", "stake-amount", "stake-not-limited",
       "sl-tolerance", "sl-use-min", "sl-partial",
-      // Unstake (merged with limit)
       "rs-hotkey", "rs-netuid", "rs-amount", "rs-not-limited",
       "rsl-tolerance", "rsl-use-min", "rsl-partial",
-      // Fast Stake (merged with limit) / Fast Unstake
-      "fs-amount", "fs-netuid", "fs-not-limited", "fsl-tolerance", "fsl-use-min", "fu-netuid",
-      // Transfer Stake
-      "ts-hotkey", "ts-origin", "ts-dest", "ts-amount",
-      // Move Stake
       "ms-origin-hotkey", "ms-dest-hotkey", "ms-origin", "ms-dest", "ms-amount",
-      // Withdraw
-      "wd-amount"
     ];
 
     const TAB_INDEX_KEY = "stakewrap_ui_tab_index";
@@ -809,8 +656,8 @@
       }
     }
 
-    // Subnet ID buttons: 0..127 — clicking sets network id for stake, unstake, unstake limit, and all fast operations
-    const SUBNET_NETWORK_IDS = ['stake-netuid', 'rs-netuid', 'fs-netuid', 'fu-netuid'];
+    // Subnet ID buttons: 0..127 — clicking sets Stake / Unstake netuid fields
+    const SUBNET_NETWORK_IDS = ['stake-netuid', 'rs-netuid'];
     function setTaoAmount(amount) {
       const val = String(amount);
       const stakeEl = document.getElementById('stake-amount');
@@ -825,11 +672,6 @@
     function toggleRemoveLimitOptions() {
       const notLimited = document.getElementById('rs-not-limited').checked;
       const opts = document.getElementById('remove-limit-options');
-      if (opts) opts.style.display = notLimited ? 'none' : 'block';
-    }
-    function toggleFastStakeLimitOptions() {
-      const notLimited = document.getElementById('fs-not-limited').checked;
-      const opts = document.getElementById('fast-stake-limit-options');
       if (opts) opts.style.display = notLimited ? 'none' : 'block';
     }
     function setNetworkIdFromSubnet(subnetId) {
@@ -863,23 +705,6 @@
       }
     }
 
-    /** Bumps when a new executor fetch starts or save starts; stale responses must not overwrite UI. */
-    let _executorSettingsFetchGen = 0;
-
-    /** One rule for checkbox + label: backend default-missing is ON (same as executor_enabled !== false). */
-    function applyExecutorUiFromPayload(je) {
-      if (!je || !je.ok) return;
-      var on = je.executor_enabled !== false;
-      var ex = document.getElementById('settings-executor-enabled');
-      var lbl = document.getElementById('settings-executor-label');
-      var msg = document.getElementById('settings-executor-msg');
-      if (ex) ex.checked = on;
-      if (lbl) lbl.textContent = on ? 'Executor ON' : 'Executor OFF';
-      if (msg) msg.textContent = je.message || '';
-      window.executorEnabledForFast = on;
-      applyFastStakeExecutorUi();
-    }
-
     // Restore persisted values as soon as DOM loads
     document.addEventListener("DOMContentLoaded", () => {
       stakingGateUpdateSecureContextWarning();
@@ -889,27 +714,15 @@
       document.getElementById('stake-not-limited').addEventListener('change', toggleStakeLimitOptions);
       toggleRemoveLimitOptions();
       document.getElementById('rs-not-limited').addEventListener('change', toggleRemoveLimitOptions);
-      toggleFastStakeLimitOptions();
-      document.getElementById('fs-not-limited').addEventListener('change', toggleFastStakeLimitOptions);
-      restoreActiveTab(); // new for tab persist
+      restoreActiveTab();
       initSubnetButtons();
-      var bootExeGen = ++_executorSettingsFetchGen;
-      Promise.all([
-        fetch('/api/contract-config').then(r => r.json()),
-        fetch('/api/executor-enabled').then(r => r.json()),
-      ])
-        .then(function (results) {
-          var j = results[0];
-          var je = results[1];
-          if (j.ok) {
-            if (j.contract) window.stakeWrapContractAddress = j.contract;
-            applyEvmStakingGateUi(j);
-          } else applyFastStakeExecutorUi();
-          if (je.ok && bootExeGen === _executorSettingsFetchGen) {
-            applyExecutorUiFromPayload(je);
-          }
+      fetch('/api/contract-config')
+        .then(r => r.json())
+        .then(function (j) {
+          if (j.ok && j.contract) window.stakeWrapContractAddress = j.contract;
+          applyEvmStakingGateUi(j);
         })
-        .catch(function () { applyFastStakeExecutorUi(); });
+        .catch(function () { /* ignore */ });
     });
 
     // --- Persistence END ---
@@ -917,11 +730,7 @@
     const tabIds = [
       { id: 'stake', label: 'Stake' },
       { id: 'remove', label: 'Unstake' },
-      { id: 'fast-stake', label: 'Fast Stake' },
-      { id: 'fast-unstake', label: 'Fast Unstake' },
-      { id: 'transfer', label: 'Transfer Stake' },
       { id: 'move', label: 'Move Stake' },
-      { id: 'withdraw', label: 'Withdraw' },
       { id: 'settings', label: 'Settings' },
     ];
 
@@ -964,8 +773,7 @@
     var PANEL_ENTER_SUBMIT_BTN = {
       'panel-stake': 'btn-evm-stake-submit',
       'panel-remove': 'btn-evm-unstake-submit',
-      'panel-fast-stake': 'btn-fast-stake',
-      'panel-fast-unstake': 'btn-fast-unstake',
+      'panel-move': 'btn-evm-move-submit',
     };
 
     function enterKeyShouldDelegateToPanelSubmit(target) {
@@ -1021,60 +829,6 @@
         else showResult(resultId, false, j.error || JSON.stringify(j));
       } catch (e) {
         showResult(resultId, false, String(e));
-      }
-    }
-
-    async function postFastStakeLimitAllSn28() {
-      if (!assertFastStakeUnstakeAllowed('special-ops-result')) return;
-      showResult('special-ops-result', false, 'Submitting fast stake-limit (all → SN28, MevShield)...');
-      try {
-        const r = await fetch('/api/fast-stake-limit-all-sn28', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: '{}',
-        });
-        const j = await r.json();
-        if (j.ok) {
-          const lines = [
-            j.message || 'OK',
-            'Amount: ' + j.amount_tao + ' TAO (' + j.amount_rao + ' rao)',
-            'Netuid: ' + j.netuid,
-            'Limit price (rao/alpha): ' + j.limit_price_used,
-          ];
-          showResult('special-ops-result', true, lines.join('\n'));
-        } else {
-          showResult('special-ops-result', false, j.error || JSON.stringify(j));
-        }
-      } catch (e) {
-        showResult('special-ops-result', false, String(e));
-      }
-    }
-
-    async function postStakeLimitAllSn28() {
-      if (!assertEvmStakingAllowed('special-ops-result')) return;
-      showResult('special-ops-result', false, 'Submitting stake-limit (all free → SN28, min tolerance)...');
-      try {
-        const r = await fetch('/api/stake-limit-all-sn28', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: '{}',
-        });
-        const j = await r.json();
-        if (j.ok) {
-          const lines = [
-            'Amount: ' + j.amount_tao + ' TAO (' + j.amount_rao + ' rao)',
-            'Hotkey: ' + j.hotkey_ss58,
-            'Netuid: ' + j.netuid,
-            'Limit price (rao/alpha): ' + j.limit_price_used,
-            '',
-            JSON.stringify(j.receipt, null, 2),
-          ];
-          showResult('special-ops-result', true, lines.join('\n'));
-        } else {
-          showResult('special-ops-result', false, j.error || JSON.stringify(j));
-        }
-      } catch (e) {
-        showResult('special-ops-result', false, String(e));
       }
     }
 
@@ -1192,32 +946,6 @@
         showResult('rs-result', false, String(e));
       }
     }
-    function postTransferStake() {
-      const raw = document.getElementById('ts-amount').value.trim();
-      const hotkey = document.getElementById('ts-hotkey').value.trim();
-      const origin_netuid = parseInt(document.getElementById('ts-origin').value, 10);
-      const destination_netuid = parseInt(document.getElementById('ts-dest').value, 10);
-      if (raw === '') {
-        postJson('/api/transfer-stake', {
-          hotkey,
-          origin_netuid,
-          destination_netuid,
-          amount_tao: null,
-        }, 'ts-result');
-        return;
-      }
-      const amount_tao = parseFloat(raw);
-      if (!Number.isFinite(amount_tao)) {
-        showResult('ts-result', false, 'Invalid amount');
-        return;
-      }
-      postJson('/api/transfer-stake', {
-        hotkey,
-        origin_netuid,
-        destination_netuid,
-        amount_tao,
-      }, 'ts-result');
-    }
     function postMoveStake() {
       if (!assertEvmStakingAllowed('ms-result')) return;
       const amountVal = document.getElementById('ms-amount').value.trim();
@@ -1228,76 +956,6 @@
         destination_netuid: parseInt(document.getElementById('ms-dest').value, 10),
         amount_tao: amountVal === '' ? null : parseFloat(amountVal),
       }, 'ms-result');
-    }
-    function postWithdraw() {
-      const raw = document.getElementById('wd-amount').value.trim();
-      if (raw === '') {
-        postJson('/api/withdraw', { amount_tao: null }, 'wd-result');
-        return;
-      }
-      const amount_tao = parseFloat(raw);
-      if (!Number.isFinite(amount_tao)) {
-        showResult('wd-result', false, 'Invalid amount');
-        return;
-      }
-      postJson('/api/withdraw', { amount_tao }, 'wd-result');
-    }
-
-    function setFastStakeAmount(amount) {
-      const el = document.getElementById('fs-amount');
-      if (el) { el.value = String(amount); persistAllInputs(); }
-    }
-    function postFastStakeOrLimit() {
-      if (!assertFastStakeUnstakeAllowed('fs-result')) return;
-      const notLimited = document.getElementById('fs-not-limited').checked;
-      const netuid = parseInt(document.getElementById('fs-netuid').value, 10);
-      const amount_tao = parseFloat(document.getElementById('fs-amount').value);
-      if (notLimited) {
-        postJson('/api/fast-stake', { netuid, amount_tao }, 'fs-result');
-      } else {
-        postJson('/api/fast-stake-limit', {
-          netuid,
-          amount_tao,
-          rate_tolerance: parseFloat(document.getElementById('fsl-tolerance').value),
-          use_min_tolerance: document.getElementById('fsl-use-min').checked,
-        }, 'fs-result');
-      }
-    }
-    async function calcMinToleranceFastStake() {
-      if (!assertFastStakeUnstakeAllowed('fs-result')) return;
-      const amount_tao = parseFloat(document.getElementById('fs-amount').value);
-      const netuid = parseInt(document.getElementById('fs-netuid').value, 10);
-      if (!amount_tao || !netuid) {
-        showResult('fs-result', false, 'Please enter Amount (TAO) and Netuid');
-        return;
-      }
-      showResult('fs-result', false, 'Calculating...');
-      try {
-        const r = await fetch('/api/calc-min-tolerance', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ tao_amount: amount_tao, netuid, operation: 'stake' }),
-        });
-        const j = await r.json();
-        if (j.ok) {
-          const tolEl = document.getElementById('fsl-tolerance');
-          if (tolEl != null && j.rate_tolerance != null) {
-            tolEl.value = j.rate_tolerance;
-            persistAllInputs();
-          }
-          showResult('fs-result', true, `Min tolerance limit price: ${j.limit_price} rao/alpha. Rate tolerance set to ${j.rate_tolerance}`);
-        } else {
-          showResult('fs-result', false, j.error);
-        }
-      } catch (e) {
-        showResult('fs-result', false, String(e));
-      }
-    }
-    function postFastUnstake() {
-      if (!assertFastStakeUnstakeAllowed('fu-result')) return;
-      postJson('/api/fast-unstake', {
-        netuid: parseInt(document.getElementById('fu-netuid').value, 10),
-      }, 'fu-result');
     }
     /** Fetch contract-config for gate banners / address only; does not repaint Contract config panel. */
     async function syncContractGateStateFromApi() {
@@ -1364,15 +1022,6 @@
             html += '<span class="hint" style="font-size:0.8rem;">Stake ops off</span>';
           } else {
             html += '<button class="unstake-btn" onclick="unstakeFromTable(' + stake.netuid + ', \'' + hotkeyEscaped + '\', ' + stake.stake_alpha_rao + ')">Unstake</button>';
-            var defaultHotkeySS58 = '5Gq2gs4ft5dhhjbHabvVbAhjMCV2RgKmVJKAFCUWiirbRT21';
-            if (stake.hotkey_ss58 == defaultHotkeySS58) {
-              var fastOk = window.executorEnabledForFast !== false;
-              if (fastOk) {
-                html += ' <button class="unstake-btn" onclick="fastUnstakeFromTable(' + stake.netuid + ')">Fast Unstake</button>';
-              } else {
-                html += ' <span class="hint" style="font-size:0.8rem;" title="Turn Executor ON in Settings">Fast off</span>';
-              }
-            }
           }
           html += '</td>';
           html += '</tr>';
@@ -1409,15 +1058,6 @@
       
       // Submit the unstake
       postRemoveStake();
-    }
-
-    function fastUnstakeFromTable(netuid) {
-      // postFastUnstake() enforces executor + contract gate; table hides Fast Unstake when executor is OFF
-      // Switch to Fast Unstake tab (index 3: Stake=0, Unstake=1, Fast Stake=2, Fast Unstake=3)
-      activateTabByIndex(3);
-      document.getElementById('fu-netuid').value = netuid;
-      persistAllInputs();
-      postFastUnstake();
     }
 
     function showInlineResult(elId, ok, text) {
@@ -1462,19 +1102,12 @@
     }
 
     async function loadSettings() {
-      var gen = ++_executorSettingsFetchGen;
       try {
-        const [rt, re] = await Promise.all([
-          fetch('/api/tolerance-offset'),
-          fetch('/api/executor-enabled'),
-        ]);
-        const [jt, je] = await Promise.all([rt.json(), re.json()]);
+        const rt = await fetch('/api/tolerance-offset');
+        const jt = await rt.json();
         if (jt.ok) {
           const tolEl = document.getElementById('settings-tolerance-offset');
           if (tolEl) tolEl.value = jt.tolerance_offset != null ? String(jt.tolerance_offset) : '';
-        }
-        if (je.ok && gen === _executorSettingsFetchGen) {
-          applyExecutorUiFromPayload(je);
         }
       } catch (e) {
         showInlineResult('settings-tolerance-result', false, 'Failed to load settings: ' + e);
@@ -1503,30 +1136,6 @@
         else showInlineResult('settings-tolerance-result', false, j.error || 'Save failed');
       } catch (e) {
         showInlineResult('settings-tolerance-result', false, String(e));
-      }
-    }
-
-    async function saveExecutorEnabled(checked) {
-      _executorSettingsFetchGen++;
-      var exEl = document.getElementById('settings-executor-enabled');
-      try {
-        const r = await fetch('/api/executor-enabled', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ enabled: checked }),
-        });
-        const j = await r.json().catch(function () { return {}; });
-        if (r.ok && j.ok) {
-          applyExecutorUiFromPayload(j);
-          showInlineResult('settings-executor-result', true, 'Executor setting saved.');
-        } else {
-          if (exEl) exEl.checked = !checked;
-          var errText = (j && (j.detail || j.error)) ? String(j.detail || j.error) : ('HTTP ' + r.status);
-          showInlineResult('settings-executor-result', false, errText);
-        }
-      } catch (e) {
-        if (exEl) exEl.checked = !checked;
-        showInlineResult('settings-executor-result', false, String(e));
       }
     }
 

@@ -2,7 +2,7 @@ import os
 import json
 from pathlib import Path
 from pydantic import BaseModel
-from typing import List, Union
+from typing import List, Optional, Union
 from dotenv import load_dotenv
 from app.constants import ROUND_TABLE_HOTKEY
 
@@ -13,7 +13,6 @@ load_dotenv(".env")
 
 # Path to store TOLERANCE_OFFSET
 TOLERANCE_OFFSET_FILE = Path("tolerance_offset.json")
-EXECUTOR_ENABLED_FILE = Path("executor_enabled.json")
 
 def load_tolerance_offset() -> Union[float, str]:
     """Load TOLERANCE_OFFSET from file, return default if file doesn't exist."""
@@ -46,26 +45,6 @@ def save_tolerance_offset(value: Union[float, str]) -> bool:
 
 
 
-def read_executor_enabled() -> bool:
-    """True if executor_enabled.json has \"enabled\": true. Default True if file missing."""
-    path = REPO_ROOT / EXECUTOR_ENABLED_FILE
-    if not path.is_file():
-        return True
-    try:
-        with open(path) as f:
-            return json.load(f).get("enabled", True)
-    except Exception:
-        return True
-
-
-def set_executor_enabled(enabled: bool) -> None:
-    """Write executor_enabled.json. Raises on IO error."""
-    path =  REPO_ROOT / EXECUTOR_ENABLED_FILE
-    with open(path, "w") as f:
-        json.dump({"enabled": enabled}, f)
-
-
-
 class Settings(BaseModel):
     VERSION: str = "1.1.1"
     NETWORK: str = os.getenv("NETWORK", "ws://127.0.0.1:9944")
@@ -83,12 +62,11 @@ class Settings(BaseModel):
     # DELEGATORS: List[str] = os.getenv("DELEGATORS", "").split(",")
     WALLET_NAMES: List[str] = ["soon", "soon_2"]
     
-    DELEGATOR_SS58 = os.getenv("DELEGATOR_SS58")
-    REAL_ACCOUNT_SS58 = os.getenv("REAL_ACCOUNT_SS58")
+    DELEGATOR_SS58: Optional[str] = os.getenv("DELEGATOR_SS58")
+    REAL_ACCOUNT_SS58: Optional[str] = os.getenv("REAL_ACCOUNT_SS58")
     
     
     ADMIN_HASH: str = "$2b$12$CqCJKab8CIgqnPU/.eT41.kzdl4d6a3/Vx70R50GAom7Im0tjGemm"
     TOLERANCE_OFFSET: Union[float, str] = load_tolerance_offset()
-    EXECUTOR_ENABLED: bool = read_executor_enabled()
 
 settings = Settings()

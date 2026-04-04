@@ -8,17 +8,6 @@ from app.services.evm_service import get_w3_account_contract, receipt_to_dict, r
 from app.services.evm import stake, stake_limit, remove_stake, remove_stake_limit, move_stake
 from utils.tolerance import calculate_stake_limit_price, calculate_unstake_limit_price
 
-DEFAULT_HOTKEY = "5GF98kTXSaGPRE5wMJfjqZ5kooMMzvZRpbaQ7YEawxaCQyZk"
-
-
-def compute_contract_stake_all_amount_rao() -> int:
-    """
-    Max TAO (rao) the StakeWrap contract coldkey can stake: free balance minus ED
-    """
-    subtensor = get_subtensor()
-    coldkey_ss58 = get_coldkey_ss58()
-    balance = subtensor.get_balance(coldkey_ss58)
-    return balance.rao - 10**9 # 1tao remaining on the contract coldkey
 
 def resolve_remove_stake_amount(
     hotkey: str, netuid: int, amount: float | None

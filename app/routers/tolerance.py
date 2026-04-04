@@ -4,7 +4,10 @@ from fastapi.responses import JSONResponse
 
 from app.auth import get_current_username
 from app.schemas import CalcToleranceBody
-from app.services.fast_stake_service import calc_min_tolerance_stake, calc_min_tolerance_unstake
+from app.services.tolerance_calc_service import (
+    calc_min_tolerance_stake,
+    calc_min_tolerance_unstake,
+)
 
 router = APIRouter(prefix="/api", tags=["tolerance"])
 
