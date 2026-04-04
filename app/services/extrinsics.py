@@ -144,7 +144,7 @@ def move_stake_extrinsic(
             "destination_hotkey": destination_hotkey,
             "origin_netuid": origin_netuid,
             "destination_netuid": destination_netuid,
-            "amount_staked": amount,
+            "alpha_amount": amount,
         }
     )
     proxied_call = proxy_call_extrinsic(

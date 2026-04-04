@@ -51,7 +51,7 @@ def resolve_move_stake_amount(
         stake_balance = subtensor.get_stake(
             coldkey_ss58=coldkey_ss58, hotkey_ss58=origin_hotkey, netuid=origin_netuid
         )
-        return stake_balance.rao - 1
+        return max(0, int(stake_balance.rao) - 1)
     if 0 < amount_tao < 1:
         stake_balance = subtensor.get_stake(
             coldkey_ss58=coldkey_ss58, hotkey_ss58=origin_hotkey, netuid=origin_netuid
