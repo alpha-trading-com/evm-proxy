@@ -1,0 +1,1535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>StakeWrap Control</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --surface: #1a2332;
+      --border: #2d3a4d;
+      --text: #e6edf3;
+      --muted: #8b9cb3;
+      --accent: #3b82f6;
+      --success: #22c55e;
+      --error: #ef4444;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 1.5rem;
+      line-height: 1.6;
+    }
+    h1 { font-size: 1.75rem; margin: 0 0 0.5rem 0; }
+    h2 { font-size: 1.25rem; margin: 0 0 1rem 0; }
+    .container { max-width: 100%; margin: 0 auto; }
+    .main-split { display: flex; gap: 1.5rem; align-items: flex-start; }
+    .main-left { flex: 1; min-width: 0; }
+    .main-left h2 { font-size: 1.25rem; margin: 0 0 1rem 0; }
+    .stake-info-panel,
+    .special-ops-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+    }
+    .special-ops-panel { margin-top: 1.25rem; }
+    .special-ops-panel h2 { margin-top: 0; }
+    .special-ops-panel .submit { margin-top: 0.75rem; }
+    .main-right { flex: 1; min-width: 0; }
+    .tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+    .tabs button {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      padding: 0.5rem 1rem;
+      border-radius: 6px 6px 0 0;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .tabs button:hover { background: var(--surface); color: var(--text); }
+    .tabs button.active { background: var(--accent); color: #fff; }
+    section.panel { display: none; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; }
+    section.panel.active { display: block; }
+    label { display: block; margin-top: 1rem; color: var(--muted); font-size: 0.9rem; font-weight: 500; }
+    label:first-of-type { margin-top: 0; }
+    input, textarea, select {
+      width: 100%;
+      max-width: 32rem;
+      padding: 0.6rem;
+      margin-top: 0.25rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 0.95rem;
+    }
+    input:focus, textarea:focus { outline: none; border-color: var(--accent); }
+    input[type="checkbox"] { width: auto; margin-right: 0.5rem; }
+    button.submit {
+      margin-top: 1.5rem;
+      background: var(--accent);
+      border: none;
+      color: #fff;
+      padding: 0.7rem 1.5rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: opacity 0.2s;
+    }
+    button.submit:hover { opacity: 0.9; }
+    button.submit:disabled { opacity: 0.5; cursor: not-allowed; }
+    .result { margin-top: 1rem; padding: 1rem; border-radius: 8px; font-size: 0.9rem; }
+    .result.ok { background: rgba(34, 197, 94, 0.15); border: 1px solid var(--success); color: var(--success); }
+    .result.err { background: rgba(239, 68, 68, 0.15); border: 1px solid var(--error); color: var(--error); }
+    .result pre { margin: 0.5rem 0 0 0; white-space: pre-wrap; word-break: break-all; }
+    small.hint { color: var(--muted); display: block; margin-top: 0.25rem; font-size: 0.85rem; }
+    .refresh-btn { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; font-size: 0.85rem; margin-top: 0.75rem; }
+    .refresh-btn:hover { background: var(--border); }
+    .stake-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    .stake-table th, .stake-table td { padding: 0.6rem; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+    .stake-table th { background: var(--bg); color: var(--muted); font-weight: 600; }
+    .stake-table tr:hover { background: rgba(59, 130, 246, 0.1); }
+    .unstake-btn { background: var(--accent); border: none; color: #fff; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
+    .unstake-btn:hover { opacity: 0.9; }
+    .unstake-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .loading { color: var(--muted); font-style: italic; }
+    .wallet-footer { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+    .wallet-footer-title { font-weight: 600; margin-bottom: 0.5rem; color: var(--text); }
+    .wallet-footer-content { font-size: 0.85rem; line-height: 1.8; color: var(--muted); font-family: monospace; }
+    .wallet-footer-content div { margin-bottom: 0.25rem; }
+    .subnet-buttons { margin-top: 1rem; }
+    .subnet-buttons-title { font-size: 0.95rem; font-weight: 600; color: var(--muted); margin-bottom: 0.5rem; }
+    .subnet-grid { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+    .subnet-btn {
+      min-width: 2rem; padding: 0.35rem 0.5rem;
+      background: var(--bg); border: 1px solid var(--border);
+      color: var(--text); border-radius: 4px; cursor: pointer;
+      font-size: 0.8rem; font-variant-numeric: tabular-nums;
+    }
+    .subnet-btn:hover { background: var(--border); color: var(--text); }
+    .subnet-btn.active-subnet { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .amount-input-row { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-top: 0.25rem; }
+    .amount-input-row input { flex: 1; min-width: 10rem; margin-top: 0; }
+    /* TAO amount + preset chips: keep the field compact; don’t stretch to max-width */
+    .amount-input-row:has(.amount-presets-row) > input[type="number"] {
+      flex: 0 0 auto;
+      width: 9.5rem;
+      max-width: 11rem;
+      min-width: 7rem;
+    }
+    .amount-presets-row { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+    .amount-preset-btn {
+      padding: 0.4rem 0.75rem; background: var(--bg); border: 1px solid var(--border);
+      color: var(--text); border-radius: 4px; cursor: pointer; font-size: 0.85rem;
+    }
+    .amount-preset-btn:hover { background: var(--border); }
+    @media (max-width: 1200px) {
+      .main-split { flex-direction: column; }
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div class="container">
+    <div class="main-split">
+      <div class="main-left">
+        <div id="evm-staking-gate-banner" class="result err" style="display: none; margin-bottom: 1rem;"></div>
+        <div id="executor-fast-banner" class="result err" style="display: none; margin-bottom: 1rem;"></div>
+        <h1>🔐 StakeWrap Control</h1>
+        <div class="tabs" id="tabs"></div>
+
+      <section class="panel active" id="panel-stake">
+        <h2>Stake</h2>
+        <small class="hint">Add stake (market) or stake limit order. Uncheck "Not limited" for limit order.</small>
+        <label style="margin-top: 0.5rem;">
+          <input id="stake-not-limited" type="checkbox" checked /> Not limited (market order)
+        </label>
+        <label>Amount (TAO)</label>
+        <div class="amount-input-row">
+          <input id="stake-amount" type="number" step="any" placeholder="e.g. 0.1" />
+          <div class="amount-presets-row">
+            <button type="button" class="amount-preset-btn" onclick="setTaoAmount(300)">300</button>
+            <button type="button" class="amount-preset-btn" onclick="setTaoAmount(250)">250</button>
+            <button type="button" class="amount-preset-btn" onclick="setTaoAmount(200)">200</button>
+            <button type="button" class="amount-preset-btn" onclick="setTaoAmount(150)">150</button>
+            <button type="button" class="amount-preset-btn" onclick="setTaoAmount(100)">100</button>
+            <button type="button" class="amount-preset-btn" onclick="setTaoAmount(50)">50</button>
+            <button type="button" class="amount-preset-btn" onclick="setTaoAmount(30)">30</button>
+          </div>
+        </div>
+        <small class="hint">Amount will be converted to rao (1 TAO = 10^9 rao)</small>
+        <label>Netuid</label>
+        <div class="amount-input-row">
+          <input id="stake-netuid" type="number" value="1" style="max-width: 8rem;" />
+          <button type="button" id="btn-evm-stake-submit" class="submit" onclick="postStakeOrLimit()" style="margin-top: 0;">Submit Stake</button>
+        </div>
+        <label>Hotkey (SS58 or 0x...)</label>
+        <input id="stake-hotkey" placeholder="5... or 0x..." value="5Gq2gs4ft5dhhjbHabvVbAhjMCV2RgKmVJKAFCUWiirbRT21" />
+        <div id="stake-limit-options" style="display: none;">
+          <div class="stake-limit-row" style="display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; margin-top: 0.5rem;">
+            <label style="margin: 0; display: flex; align-items: center; gap: 0.35rem;">
+              <span>Rate Tolerance</span>
+              <input id="sl-tolerance" type="number" step="any" value="0.5" placeholder="e.g. 0.5" style="width: 8rem; margin: 0;" />
+            </label>
+            <label style="margin: 0;">
+              <input id="sl-use-min" type="checkbox" /> Use Minimum Tolerance
+            </label>
+            <label style="margin: 0;">
+              <input id="sl-partial" type="checkbox" /> Allow Partial Staking
+            </label>
+            <small class="hint" style="margin: 0;">Ignored when "Use Minimum Tolerance" is checked</small>
+            <button type="button" class="refresh-btn" style="margin: 0;" onclick="calcMinToleranceStake()">Calculate Min Tolerance</button>
+          </div>
+        </div>
+        <div id="stake-result"></div>
+      </section>
+
+      <section class="panel" id="panel-remove">
+        <h2>Unstake</h2>
+        <small class="hint">Remove stake (market) or unstake limit order. Amount in raw alpha units (integer). Leave amount empty to unstake all.</small>
+        <label style="margin-top: 0.5rem;">
+          <input id="rs-not-limited" type="checkbox" checked /> Not limited (market order)
+        </label>
+        <label>Amount (integer, alpha raw units)</label>
+        <input id="rs-amount" type="number" placeholder="e.g. 100000000 (empty = all)" />
+        <label>Netuid</label>
+        <div class="amount-input-row">
+          <input id="rs-netuid" type="number" value="1" style="max-width: 8rem;" />
+          <button type="button" id="btn-evm-unstake-submit" class="submit" onclick="postRemoveStakeOrLimit()" style="margin-top: 0;">Submit Unstake</button>
+        </div>
+        <label>Hotkey</label>
+        <input id="rs-hotkey" placeholder="5... or 0x..." value="5Gq2gs4ft5dhhjbHabvVbAhjMCV2RgKmVJKAFCUWiirbRT21" />
+        <div id="remove-limit-options" style="display: none;">
+          <div class="stake-limit-row" style="display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; margin-top: 0.5rem;">
+            <label style="margin: 0; display: flex; align-items: center; gap: 0.35rem;">
+              <span>Rate Tolerance</span>
+              <input id="rsl-tolerance" type="number" step="any" value="0.5" placeholder="e.g. 0.5" style="width: 5rem; margin: 0;" />
+            </label>
+            
+            <label style="margin: 0;">
+              <input id="rsl-use-min" type="checkbox" /> Use Minimum Tolerance
+            </label>
+            <label style="margin: 0;">
+              <input id="rsl-partial" type="checkbox" /> Allow partial fill
+            </label>
+            <small class="hint" style="margin: 0;">Ignored when "Use Minimum Tolerance" is checked</small>
+            <button type="button" class="refresh-btn" style="margin: 0;" onclick="calcMinToleranceUnstake()">Calculate Min Tolerance</button>
+          </div>
+        </div>
+        <div id="rs-result"></div>
+      </section>
+
+      <section class="panel" id="panel-transfer">
+        <h2>Transfer Stake</h2>
+        <small class="hint">Transfer stake to the predefined allowed coldkey only. Leave amount empty to transfer the full stake on the origin netuid.</small>
+        <label>Amount (TAO)</label>
+        <input id="ts-amount" type="number" step="any" placeholder="e.g. 0.1 — empty = transfer all" />
+        <label>Origin Netuid</label>
+        <input id="ts-origin" type="number" value="1" />
+        <label>Destination Netuid</label>
+        <input id="ts-dest" type="number" value="1" />
+        <label>Hotkey</label>
+        <input id="ts-hotkey" placeholder="5... or 0x..." value="5Gq2gs4ft5dhhjbHabvVbAhjMCV2RgKmVJKAFCUWiirbRT21" />
+        <button type="button" id="btn-evm-transfer-submit" class="submit" onclick="postTransferStake()">Submit Transfer Stake</button>
+        <div id="ts-result"></div>
+      </section>
+
+      <section class="panel" id="panel-move">
+        <h2>Move Stake</h2>
+        <small class="hint">Move stake between different hotkeys. Leave amount empty to move all (alpha).</small>
+        <label>Amount (TAO)</label>
+        <input id="ms-amount" type="number" step="any" placeholder="e.g. 0.1 (empty = all)" />
+        <label>Origin Netuid</label>
+        <input id="ms-origin" type="number" value="1" />
+        <label>Destination Netuid</label>
+        <input id="ms-dest" type="number" value="1" />
+        <label>Origin Hotkey</label>
+        <input id="ms-origin-hotkey" placeholder="5... or 0x..." value="5Gq2gs4ft5dhhjbHabvVbAhjMCV2RgKmVJKAFCUWiirbRT21" />
+        <label>Destination Hotkey</label>
+        <input id="ms-dest-hotkey" placeholder="5... or 0x..." value="5Gq2gs4ft5dhhjbHabvVbAhjMCV2RgKmVJKAFCUWiirbRT21" />
+        <button type="button" id="btn-evm-move-submit" class="submit" onclick="postMoveStake()">Submit Move Stake</button>
+        <div id="ms-result"></div>
+      </section>
+
+      <section class="panel" id="panel-withdraw">
+        <h2>Withdraw TAO</h2>
+        <small class="hint">Withdraw TAO from the contract (owner only). Leave amount empty to withdraw the full contract balance.</small>
+        <label>Amount (TAO)</label>
+        <input id="wd-amount" type="number" step="any" placeholder="e.g. 0.1 — empty = withdraw all" />
+        <button class="submit" onclick="postWithdraw()">Submit Withdraw</button>
+        <div id="wd-result"></div>
+      </section>
+
+      <section class="panel" id="panel-fast-stake">
+        <h2>Fast Stake</h2>
+        <small class="hint">Stake via MevShield (Bittensor extrinsic). Requires Executor ON (Settings). Uncheck "Not limited" for limit order.</small>
+        <label style="margin-top: 0.5rem;">
+          <input id="fs-not-limited" type="checkbox" checked /> Not limited (market order)
+        </label>
+        <label>Amount (TAO)</label>
+        <div class="amount-input-row">
+          <input id="fs-amount" type="number" step="any" placeholder="e.g. 0.1" />
+          <div class="amount-presets-row">
+            <button type="button" class="amount-preset-btn" onclick="setFastStakeAmount(300)">300</button>
+            <button type="button" class="amount-preset-btn" onclick="setFastStakeAmount(250)">250</button>
+            <button type="button" class="amount-preset-btn" onclick="setFastStakeAmount(200)">200</button>
+            <button type="button" class="amount-preset-btn" onclick="setFastStakeAmount(150)">150</button>
+            <button type="button" class="amount-preset-btn" onclick="setFastStakeAmount(100)">100</button>
+            <button type="button" class="amount-preset-btn" onclick="setFastStakeAmount(50)">50</button>
+            <button type="button" class="amount-preset-btn" onclick="setFastStakeAmount(30)">30</button>
+          </div>
+        </div>
+        <label>Netuid</label>
+        <div class="amount-input-row">
+          <input id="fs-netuid" type="number" value="1" style="max-width: 8rem;" />
+          <button id="btn-fast-stake" class="submit" onclick="postFastStakeOrLimit()" style="margin-top: 0;">Submit Fast Stake</button>
+        </div>
+        <div id="fast-stake-limit-options" style="display: none;">
+          <div class="stake-limit-row" style="display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; margin-top: 0.5rem;">
+            <label style="margin: 0; display: flex; align-items: center; gap: 0.35rem;">
+              <span>Rate Tolerance</span>
+              <input id="fsl-tolerance" type="number" step="any" value="0.5" placeholder="e.g. 0.5" style="width: 5rem; margin: 0;" />
+            </label>
+            <small class="hint" style="margin: 0;">Ignored when "Use Minimum Tolerance" is checked</small>
+            <label style="margin: 0;">
+              <input id="fsl-use-min" type="checkbox" /> Use Minimum Tolerance
+            </label>
+            <button type="button" class="refresh-btn" style="margin: 0;" onclick="calcMinToleranceFastStake()">Calculate Min Tolerance</button>
+          </div>
+        </div>
+        <div id="fs-result"></div>
+      </section>
+
+      <section class="panel" id="panel-fast-unstake">
+        <h2>Fast Unstake</h2>
+        <small class="hint">Unstake via MevShield (Bittensor extrinsic). Requires Executor ON (Settings). Unstakes all for the given netuid.</small>
+        <label>Netuid</label>
+        <input id="fu-netuid" type="number" value="1" />
+        <button id="btn-fast-unstake" class="submit" onclick="postFastUnstake()">Submit Fast Unstake</button>
+        <div id="fu-result"></div>
+      </section>
+
+      <section class="panel" id="panel-settings">
+        <h2>Settings</h2>
+
+        <h3 style="margin: 0 0 0.5rem 0; font-size: 1.05rem; color: var(--muted);">Executor / heartbeat</h3>
+        <small class="hint">Single switch in executor_enabled.json. When OFF, auto-execute scripts skip submissions.</small>
+        <label style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem;">
+          <input id="settings-executor-enabled" type="checkbox" onchange="saveExecutorEnabled(this.checked)" />
+          <span id="settings-executor-label">Executor ON</span>
+        </label>
+        <div id="settings-executor-msg" class="hint" style="margin-top: 0.35rem;"></div>
+        <div id="settings-executor-result" class="result" style="display: none;"></div>
+
+        <h3 style="margin: 1.25rem 0 0.5rem 0; font-size: 1.05rem; color: var(--muted);">Contract config</h3>
+        <small class="hint">Read-only values from the deployed StakeWrap contract.</small>
+        <button type="button" class="refresh-btn" onclick="loadContractConfig()" style="margin-top: 0.5rem;">Refresh</button>
+        <div id="contract-config-container" class="wallet-footer" style="margin-top: 0.75rem;">
+          <div class="loading">Load Settings to see contract config.</div>
+        </div>
+
+        <h3 style="margin: 1.25rem 0 0.5rem 0; font-size: 1.05rem; color: var(--muted);">Staking / unstaking gate (contract)</h3>
+        <div id="staking-gate-secure-context-warning" class="result err" style="display: none; margin-top: 0.5rem; font-size: 0.9rem;">
+          <strong>Not a secure context</strong> — you are on plain <code>http://</code> to a <strong>non-localhost</strong> host. Browsers set <code>isSecureContext === false</code>, and wallet extensions (Talisman, MetaMask, …) usually <strong>do not inject</strong> an EVM provider on this origin. That is why Wallet debug shows no <code>talismanEth</code> / <code>ethereum</code> / EIP-6963.
+          <div style="margin-top: 0.75rem;"><strong>Fix (pick one):</strong></div>
+          <ul style="margin: 0.35rem 0 0 1.25rem; padding: 0;">
+            <li><strong>HTTPS</strong> — Put the UI behind TLS (e.g. nginx/Caddy + Let’s Encrypt, or a cert you trust).</li>
+            <li><strong>SSH tunnel → localhost</strong> — From your PC: <code style="word-break: break-all;">ssh -L 19000:127.0.0.1:19000 user@212.56.40.85</code> then open <code>http://127.0.0.1:19000/ui</code> (loopback counts as a secure context for wallets).</li>
+            <li><strong>CLI</strong> — Use <code>cast send</code> / Foundry or Python with your owner key to call <code>setStakingGatePasswordHash</code> / <code>setStakingUnstakingEnabled</code> (no browser wallet).</li>
+          </ul>
+          <div style="margin-top: 0.85rem;"><strong>On your phone</strong> — Mobile Safari/Chrome use the same rule: <code>http://&lt;server-ip&gt;:port</code> is <strong>not</strong> a secure context, so in-page wallets usually will not work.</div>
+          <ul style="margin: 0.35rem 0 0 1.25rem; padding: 0;">
+            <li><strong>Best:</strong> Put the UI on <strong><code>https://</code> with a domain</strong> (Let’s Encrypt). Open that URL on the phone — same as desktop.</li>
+            <li><strong>Wallet in-app browser:</strong> In MetaMask Mobile (or another EVM wallet app), open the <strong>Browser</strong> tab and go to your <strong>HTTPS</strong> UI URL; the app injects the provider there. Plain HTTP to an IP in the wallet browser still fails the same way.</li>
+            <li><strong>Talisman on phone:</strong> If you only have Talisman as a browser extension (desktop), use a mobile EVM wallet’s in-app browser for gate txs, or run gate setup once from a PC with tunnel/HTTPS.</li>
+            <li><strong>Advanced:</strong> Android <strong>Termux</strong> can run <code>ssh -L 19000:127.0.0.1:19000 user@server</code> then open <code>http://127.0.0.1:19000/ui</code> on the phone — loopback is a secure context.</li>
+          </ul>
+        </div>
+        <small class="hint">Gate password is never sent to this app’s server. Use an <strong>Ethereum (ETH) account in Talisman</strong> (Add account → Ethereum); Substrate-only accounts will not expose an EVM provider. We detect <code>window.talismanEth</code>, <code>window.ethereum</code>, multi-wallet <code>ethereum.providers</code>, and EIP-6963. Match the chain to this deployment, then sign in the extension.</small>
+        <small class="hint" style="margin-top: 0.35rem;">Blocks EVM stake, unstake, transfer/move stake, and <code>execute()</code> staking. Withdraw and Fast Stake/Unstake are not blocked by this flag.</small>
+        <div style="margin-top: 0.75rem;">
+          <button type="button" class="submit" onclick="stakingGateConnectWallet()">Connect owner wallet</button>
+          <button type="button" class="refresh-btn" onclick="stakingGateShowDebug()" style="margin-left: 0.5rem;">Wallet debug</button>
+          <span id="staking-gate-wallet-status" class="hint" style="margin-left: 0.75rem; font-family: monospace;"></span>
+        </div>
+        <pre id="staking-gate-debug" class="hint" style="display: none; margin-top: 0.5rem; padding: 0.75rem; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; font-size: 0.75rem; white-space: pre-wrap; word-break: break-all; max-height: 14rem; overflow: auto;"></pre>
+        <label style="margin-top: 0.75rem;">One-time: gate password → <code>keccak256(utf8)</code> hash on-chain</label>
+        <input type="password" id="staking-gate-init-password" autocomplete="new-password" style="max-width: 24rem;" />
+        <button type="button" class="submit" onclick="clientInitGateHash()" style="margin-top: 0.5rem;">Initialize gate hash (wallet tx)</button>
+        <label style="margin-top: 1rem;">Allow EVM staking / unstaking (after gate is set)</label>
+        <label style="margin-top: 0.35rem; display: flex; align-items: center; gap: 0.5rem;">
+          <input id="staking-gate-enabled-apply" type="checkbox" checked />
+          <span>Enabled (unchecked = disabled on chain)</span>
+        </label>
+        <label>Password for toggle</label>
+        <input type="password" id="staking-gate-toggle-password" autocomplete="current-password" style="max-width: 24rem;" />
+        <button type="button" class="submit" onclick="clientApplyGateToggle()" style="margin-top: 0.5rem;">Apply toggle (wallet tx)</button>
+        <div id="staking-gate-result" class="result" style="display: none; margin-top: 0.75rem;"></div>
+
+        <h3 style="margin: 1.25rem 0 0.5rem 0; font-size: 1.05rem; color: var(--muted);">Tolerance offset</h3>
+        <small class="hint">Used when "Use Minimum Tolerance" is checked (stake/unstake limit). Number (e.g. 0.001) or multiplier *1.2.</small>
+        <label>Tolerance offset</label>
+        <input id="settings-tolerance-offset" type="text" placeholder="e.g. 0.001 or *1.2" style="max-width: 12rem;" />
+        <button class="submit" onclick="saveToleranceOffset()" style="margin-top: 0.75rem;">Save tolerance offset</button>
+        <div id="settings-tolerance-result" class="result" style="display: none;"></div>
+      </section>
+      </div>
+      <div class="main-right">
+        <div class="stake-info-panel">
+          <h2 style="margin-top: 0;">Stake Info</h2>
+          <button type="button" class="refresh-btn" onclick="loadStakeInfo()">Refresh</button>
+          <div id="stake-info-container">
+            <div class="loading">Click <strong>Refresh</strong> above to load stake info.</div>
+          </div>
+          <div class="subnet-buttons">
+            <div class="subnet-buttons-title">Subnet ID (click to set Stake / Unstake / Fast Stake / Fast Unstake)</div>
+            <div class="subnet-grid" id="subnet-grid"></div>
+          </div>
+        </div>
+        <div class="special-ops-panel">
+          <h2>Special operations</h2>
+          <small class="hint" style="margin-top: 0;">One-click actions that bypass the Stake tab fields. Same auth and contract rules as normal staking.</small>
+          <button type="button" id="btn-stake-all-sn28" class="submit" onclick="postStakeLimitAllSn28()" style="background: #6366f1;">
+            Stake all free TAO → SN28 (limit, min tolerance, default hotkey)
+          </button>
+          <small class="hint">EVM StakeWrap stake-limit. Uses the contract coldkey balance (same basis as server <code>compute_contract_stake_all_amount_rao</code>), netuid 28, default hotkey, minimum tolerance, no partial fill.</small>
+          <button type="button" id="btn-fast-stake-all-sn28" class="submit" onclick="postFastStakeLimitAllSn28()" style="margin-top: 1rem; background: #7c3aed;">
+            Fast stake all TAO → SN28 (limit, min tolerance)
+          </button>
+          <small class="hint">MevShield / Bittensor extrinsic (same encoded amount as above). Requires <strong>Executor ON</strong> and contract staking enabled; delegates must have funds for <code>execute()</code>.</small>
+          <div id="special-ops-result"></div>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+
+  <script>
+    window.evmStakingBlocked = false;
+    window.stakeWrapContractAddress = null;
+    let stakingGateSigner = null;
+    /** EIP-1193 provider used for chain switch + BrowserProvider (set on connect). */
+    let stakingGateRawProvider = null;
+
+    const STAKE_WRAP_GATE_ABI = [
+      'function owner() view returns (address)',
+      'function stakingGateConfigured() view returns (bool)',
+      'function stakingUnstakingEnabled() view returns (bool)',
+      'function setStakingGatePasswordHash(bytes32 hash)',
+      'function setStakingUnstakingEnabled(bool enabled, string password)',
+    ];
+
+    function getInjectedEvmProviderSync() {
+      try {
+        var te = window.talismanEth;
+        if (te && typeof te.request === 'function') return te;
+        var subw = window.subwallet?.ethereum;
+        if (subw && typeof subw.request === 'function') return subw;
+        var eth = window.ethereum;
+        if (!eth) return null;
+        if (eth.providers && Array.isArray(eth.providers)) {
+          var k;
+          for (k = 0; k < eth.providers.length; k++) {
+            var pr = eth.providers[k];
+            if (pr && pr.isTalisman === true && typeof pr.request === 'function') return pr;
+          }
+          for (k = 0; k < eth.providers.length; k++) {
+            pr = eth.providers[k];
+            if (pr && (pr.isSubWallet === true || pr.isBraveWallet === true) && typeof pr.request === 'function') return pr;
+          }
+          for (k = 0; k < eth.providers.length; k++) {
+            if (eth.providers[k] && typeof eth.providers[k].request === 'function') return eth.providers[k];
+          }
+        }
+        if (typeof eth.request === 'function') return eth;
+      } catch (e) { /* ignore */ }
+      return null;
+    }
+
+    function discoverEip6963Providers(preferTalisman) {
+      return new Promise(function (resolve) {
+        var details = [];
+        function onAnn(ev) {
+          try {
+            if (ev && ev.detail && ev.detail.provider && ev.detail.info) details.push(ev.detail);
+          } catch (e2) { /* ignore */ }
+        }
+        window.addEventListener('eip6963:announceProvider', onAnn);
+        function fireRequest() {
+          try {
+            window.dispatchEvent(new Event('eip6963:requestProvider'));
+          } catch (e3) {
+            try { window.dispatchEvent(new CustomEvent('eip6963:requestProvider')); } catch (e4) { /* ignore */ }
+          }
+        }
+        fireRequest();
+        setTimeout(fireRequest, 400);
+        setTimeout(function () {
+          window.removeEventListener('eip6963:announceProvider', onAnn);
+          var pick = null;
+          var j;
+          if (preferTalisman && details.length) {
+            for (j = 0; j < details.length; j++) {
+              var inf = details[j].info;
+              var label = ((inf.name || '') + ' ' + (inf.rdns || '')).toLowerCase();
+              if (label.indexOf('talisman') >= 0) {
+                pick = details[j].provider;
+                break;
+              }
+            }
+          }
+          if (!pick && details.length) pick = details[0].provider;
+          resolve({ provider: pick, announced: details });
+        }, 1200);
+      });
+    }
+
+    async function waitForInjectedProvider(maxWaitMs, stepMs) {
+      var deadline = Date.now() + (maxWaitMs || 4000);
+      var step = stepMs || 200;
+      while (Date.now() < deadline) {
+        var p = getInjectedEvmProviderSync();
+        if (p) return p;
+        await new Promise(function (r) { setTimeout(r, step); });
+      }
+      return null;
+    }
+
+    async function resolveEvmProvider(preferTalisman) {
+      var sync = getInjectedEvmProviderSync();
+      if (sync) return sync;
+      sync = await waitForInjectedProvider(3500, 200);
+      if (sync) return sync;
+      var discovered = await discoverEip6963Providers(preferTalisman);
+      return discovered.provider;
+    }
+
+    function stakingGateUpdateSecureContextWarning() {
+      var el = document.getElementById('staking-gate-secure-context-warning');
+      if (el) el.style.display = window.isSecureContext ? 'none' : 'block';
+    }
+
+    function stakingGateCollectDebugLines() {
+      var lines = [];
+      lines.push('secureContext=' + String(window.isSecureContext));
+      if (!window.isSecureContext) {
+        lines.push('NOTE: http://<public-ip> is NOT a secure context — extensions usually skip injection. Use HTTPS or http://127.0.0.1 via SSH -L.');
+      }
+      lines.push('protocol=' + location.protocol + ' host=' + location.host);
+      lines.push('talismanEth=' + (window.talismanEth ? 'yes (request=' + typeof window.talismanEth.request + ')' : 'no'));
+      lines.push('ethereum=' + (window.ethereum ? 'yes' : 'no'));
+      if (window.ethereum && window.ethereum.providers) {
+        lines.push('ethereum.providers.length=' + window.ethereum.providers.length);
+      }
+      lines.push('subwallet.ethereum=' + (window.subwallet && window.subwallet.ethereum ? 'yes' : 'no'));
+      return lines;
+    }
+
+    async function stakingGateShowDebug() {
+      var pre = document.getElementById('staking-gate-debug');
+      if (!pre) return;
+      pre.style.display = 'block';
+      pre.textContent = stakingGateCollectDebugLines().join('\n') + '\n\nProbing EIP-6963 (1.2s)…';
+      var ann = [];
+      function onAnn(ev) {
+        try {
+          if (ev && ev.detail && ev.detail.info) ann.push((ev.detail.info.name || '?') + ' rdns=' + (ev.detail.info.rdns || '?'));
+        } catch (e) { /* ignore */ }
+      }
+      window.addEventListener('eip6963:announceProvider', onAnn);
+      try { window.dispatchEvent(new Event('eip6963:requestProvider')); } catch (e) { /* ignore */ }
+      setTimeout(function () {
+        window.removeEventListener('eip6963:announceProvider', onAnn);
+        pre.textContent =
+          stakingGateCollectDebugLines().join('\n') +
+          '\n\neip6963 wallets (' +
+          ann.length +
+          '):\n' +
+          (ann.length ? ann.join('\n') : '(none — extension may not support EIP-6963 or page is isolated)');
+      }, 1250);
+    }
+
+    async function stakingGateEnsureChain() {
+      const st = await fetch('/api/status').then(function (r) { return r.json(); });
+      var eth = stakingGateRawProvider || await resolveEvmProvider(true);
+      if (!st.ok || st.chain_id == null || !eth) return;
+      var hex = '0x' + BigInt(st.chain_id).toString(16);
+      try {
+        await eth.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: hex }] });
+      } catch (e) {
+        if (e && e.code === 4902) {
+          console.warn('wallet_switchEthereumChain: add network for chainId', st.chain_id);
+        }
+      }
+    }
+
+    async function stakingGateConnectWallet() {
+      if (typeof ethers === 'undefined') {
+        showInlineResult('staking-gate-result', false, 'ethers.js failed to load (check CDN).');
+        return;
+      }
+      showInlineResult('staking-gate-result', false, 'Looking for wallet…');
+      var eth = await resolveEvmProvider(true);
+      if (!eth) {
+        var msg =
+          'No EVM provider after ~5s. If secureContext=false (http:// to a public IP), wallets will not inject — see the red box above: use HTTPS or SSH tunnel to 127.0.0.1. ' +
+          'Otherwise: add an Ethereum account in Talisman, allow the site, click Wallet debug.';
+        showInlineResult('staking-gate-result', false, msg);
+        return;
+      }
+      stakingGateRawProvider = eth;
+      showInlineResult('staking-gate-result', false, 'Connecting…');
+      try {
+        await eth.request({ method: 'eth_requestAccounts' });
+        var provider = new ethers.BrowserProvider(eth);
+        stakingGateSigner = await provider.getSigner();
+        var addr = await stakingGateSigner.getAddress();
+        var el = document.getElementById('staking-gate-wallet-status');
+        if (el) el.textContent = addr;
+        await stakingGateEnsureChain();
+        showInlineResult('staking-gate-result', true, 'Connected: ' + addr);
+      } catch (e) {
+        stakingGateSigner = null;
+        stakingGateRawProvider = null;
+        showInlineResult('staking-gate-result', false, (e.shortMessage || e.message || String(e)));
+      }
+    }
+
+    async function stakingGateGetContract() {
+      var caddr = window.stakeWrapContractAddress;
+      if (!caddr) throw new Error('Click Refresh on Contract config above (need contract address).');
+      if (!stakingGateSigner) throw new Error('Connect owner wallet first.');
+      return new ethers.Contract(caddr, STAKE_WRAP_GATE_ABI, stakingGateSigner);
+    }
+
+    async function clientInitGateHash() {
+      var pw = document.getElementById('staking-gate-init-password');
+      var password = pw && pw.value ? pw.value : '';
+      if (!password) {
+        showInlineResult('staking-gate-result', false, 'Enter a password for the one-time gate hash.');
+        return;
+      }
+      if (typeof ethers === 'undefined') {
+        showInlineResult('staking-gate-result', false, 'ethers.js not loaded.');
+        return;
+      }
+      showInlineResult('staking-gate-result', false, 'Confirm in wallet…');
+      try {
+        await stakingGateEnsureChain();
+        var c = await stakingGateGetContract();
+        var me = (await stakingGateSigner.getAddress()).toLowerCase();
+        var owner = (await c.owner()).toLowerCase();
+        if (owner !== me) throw new Error('Connected account is not contract owner');
+        var hash = ethers.keccak256(ethers.toUtf8Bytes(password));
+        var tx = await c.setStakingGatePasswordHash(hash);
+        showInlineResult('staking-gate-result', false, 'Pending… ' + tx.hash);
+        await tx.wait();
+        showInlineResult('staking-gate-result', true, 'Confirmed. Tx: ' + tx.hash);
+        if (pw) pw.value = '';
+        syncContractGateStateFromApi();
+      } catch (e) {
+        showInlineResult('staking-gate-result', false, (e.shortMessage || e.message || String(e)));
+      }
+    }
+
+    async function clientApplyGateToggle() {
+      var enabled = document.getElementById('staking-gate-enabled-apply').checked;
+      var pwEl = document.getElementById('staking-gate-toggle-password');
+      var password = pwEl && pwEl.value ? pwEl.value : '';
+      if (!password) {
+        showInlineResult('staking-gate-result', false, 'Enter the gate password.');
+        return;
+      }
+      if (typeof ethers === 'undefined') {
+        showInlineResult('staking-gate-result', false, 'ethers.js not loaded.');
+        return;
+      }
+      showInlineResult('staking-gate-result', false, 'Confirm in wallet…');
+      try {
+        await stakingGateEnsureChain();
+        var c = await stakingGateGetContract();
+        var me = (await stakingGateSigner.getAddress()).toLowerCase();
+        var owner = (await c.owner()).toLowerCase();
+        if (owner !== me) throw new Error('Connected account is not contract owner');
+        var tx = await c.setStakingUnstakingEnabled(enabled, password);
+        showInlineResult('staking-gate-result', false, 'Pending… ' + tx.hash);
+        await tx.wait();
+        showInlineResult('staking-gate-result', true, 'Confirmed. Tx: ' + tx.hash);
+        if (pwEl) pwEl.value = '';
+        syncContractGateStateFromApi();
+      } catch (e) {
+        showInlineResult('staking-gate-result', false, (e.shortMessage || e.message || String(e)));
+      }
+    }
+
+    function applyEvmStakingGateUi(j) {
+      if (!j || j.ok !== true) return;
+      window.evmStakingBlocked = j.staking_unstaking_enabled === false;
+      ['btn-evm-stake-submit', 'btn-evm-unstake-submit', 'btn-evm-move-submit', 'btn-stake-all-sn28'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.disabled = window.evmStakingBlocked;
+      });
+      const ban = document.getElementById('evm-staking-gate-banner');
+      if (ban) {
+        if (j.staking_unstaking_enabled === false) {
+          ban.style.display = 'block';
+          ban.textContent = 'Staking / unstaking / move stake are disabled on the contract. You can still use Transfer Stake and Withdraw. Fast Stake / Fast Unstake also require Executor ON when the contract allows staking.';
+        } else {
+          ban.style.display = 'none';
+          ban.textContent = '';
+        }
+      }
+      const chk = document.getElementById('staking-gate-enabled-apply');
+      if (chk && j.staking_unstaking_enabled !== null && j.staking_unstaking_enabled !== undefined) {
+        chk.checked = !!j.staking_unstaking_enabled;
+      }
+      applyFastStakeExecutorUi();
+    }
+
+    /** Default true (matches server when executor_enabled.json is missing). */
+    window.executorEnabledForFast = true;
+
+    /** Fast Stake / Fast Unstake: only submit actions disabled when contract staking is off OR executor is OFF.
+     * Amount presets, inputs, and limit options stay enabled so you can fill the form; Submit still enforces the gate. */
+    function applyFastStakeExecutorUi() {
+      const contractOff = window.evmStakingBlocked === true;
+      const executorOff = window.executorEnabledForFast === false;
+      const fastBlocked = contractOff || executorOff;
+      ['btn-fast-stake', 'btn-fast-unstake', 'btn-fast-stake-all-sn28'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.disabled = fastBlocked;
+      });
+
+      const exBan = document.getElementById('executor-fast-banner');
+      if (exBan) {
+        if (executorOff && !contractOff) {
+          exBan.style.display = 'block';
+          exBan.textContent = 'Fast Stake and Fast Unstake are disabled because Executor is OFF. Turn Executor ON in Settings.';
+        } else {
+          exBan.style.display = 'none';
+          exBan.textContent = '';
+        }
+      }
+    }
+
+    function assertEvmStakingAllowed(resultId) {
+      if (window.evmStakingBlocked) {
+        showResult(resultId, false, 'Contract staking/unstaking is disabled — only Transfer Stake and Withdraw are allowed (re-enable in Settings with gate password).');
+        return false;
+      }
+      return true;
+    }
+
+    function assertFastStakeUnstakeAllowed(resultId) {
+      if (window.executorEnabledForFast === false) {
+        showResult(resultId, false, 'Executor is OFF. Turn Executor ON in Settings to use Fast Stake / Fast Unstake.');
+        return false;
+      }
+      if (window.evmStakingBlocked) {
+        showResult(resultId, false, 'Contract staking/unstaking is disabled — Fast Stake / Fast Unstake are not available.');
+        return false;
+      }
+      return true;
+    }
+
+    // --- Persistence START ---
+
+    // List of all input/checkbox element ids to persist
+    const PERSISTED_FIELDS = [
+      // Stake (merged with limit)
+      "stake-hotkey", "stake-netuid", "stake-amount", "stake-not-limited",
+      "sl-tolerance", "sl-use-min", "sl-partial",
+      // Unstake (merged with limit)
+      "rs-hotkey", "rs-netuid", "rs-amount", "rs-not-limited",
+      "rsl-tolerance", "rsl-use-min", "rsl-partial",
+      // Fast Stake (merged with limit) / Fast Unstake
+      "fs-amount", "fs-netuid", "fs-not-limited", "fsl-tolerance", "fsl-use-min", "fu-netuid",
+      // Transfer Stake
+      "ts-hotkey", "ts-origin", "ts-dest", "ts-amount",
+      // Move Stake
+      "ms-origin-hotkey", "ms-dest-hotkey", "ms-origin", "ms-dest", "ms-amount",
+      // Withdraw
+      "wd-amount"
+    ];
+
+    const TAB_INDEX_KEY = "stakewrap_ui_tab_index";
+
+    function isCheckbox(id) {
+      const el = document.getElementById(id);
+      return el && el.type === "checkbox";
+    }
+    function getFieldValue(id) {
+      const el = document.getElementById(id);
+      if (!el) return undefined;
+      if (el.type === "checkbox") return el.checked;
+      return el.value;
+    }
+    function setFieldValue(id, val) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (el.type === "checkbox") {
+        el.checked = Boolean(val);
+      } else if (val !== undefined) {
+        el.value = val;
+      }
+    }
+    // Save all fields to localStorage
+    function persistAllInputs() {
+      let data = {};
+      for (const id of PERSISTED_FIELDS) {
+        data[id] = getFieldValue(id);
+      }
+      localStorage.setItem("stakewrap_ui_inputs", JSON.stringify(data));
+    }
+    // Restore all fields from localStorage
+    function restoreAllInputs() {
+      let data;
+      try {
+        data = JSON.parse(localStorage.getItem("stakewrap_ui_inputs") || "{}");
+      } catch {
+        data = {};
+      }
+      for (const id of PERSISTED_FIELDS) {
+        if (data.hasOwnProperty(id)) setFieldValue(id, data[id]);
+      }
+    }
+
+    // Attach listeners to each field for instant save
+    function setupFieldPersistence() {
+      for (const id of PERSISTED_FIELDS) {
+        const el = document.getElementById(id);
+        if (!el) continue;
+        // Listen for events that change the value
+        el.addEventListener(el.type === "checkbox" ? "change" : "input", persistAllInputs);
+      }
+    }
+
+    // Subnet ID buttons: 0..127 — clicking sets network id for stake, unstake, unstake limit, and all fast operations
+    const SUBNET_NETWORK_IDS = ['stake-netuid', 'rs-netuid', 'fs-netuid', 'fu-netuid'];
+    function setTaoAmount(amount) {
+      const val = String(amount);
+      const stakeEl = document.getElementById('stake-amount');
+      if (stakeEl) stakeEl.value = val;
+      persistAllInputs();
+    }
+    function toggleStakeLimitOptions() {
+      const notLimited = document.getElementById('stake-not-limited').checked;
+      const opts = document.getElementById('stake-limit-options');
+      if (opts) opts.style.display = notLimited ? 'none' : 'block';
+    }
+    function toggleRemoveLimitOptions() {
+      const notLimited = document.getElementById('rs-not-limited').checked;
+      const opts = document.getElementById('remove-limit-options');
+      if (opts) opts.style.display = notLimited ? 'none' : 'block';
+    }
+    function toggleFastStakeLimitOptions() {
+      const notLimited = document.getElementById('fs-not-limited').checked;
+      const opts = document.getElementById('fast-stake-limit-options');
+      if (opts) opts.style.display = notLimited ? 'none' : 'block';
+    }
+    function setNetworkIdFromSubnet(subnetId) {
+      const val = String(subnetId);
+      SUBNET_NETWORK_IDS.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.value = val; }
+      });
+      persistAllInputs();
+      document.querySelectorAll('.subnet-btn').forEach(btn => btn.classList.remove('active-subnet'));
+      const activeBtn = document.querySelector('.subnet-btn[data-subnet-id="' + subnetId + '"]');
+      if (activeBtn) activeBtn.classList.add('active-subnet');
+    }
+    function initSubnetButtons() {
+      const grid = document.getElementById('subnet-grid');
+      if (!grid) return;
+      for (let i = 0; i < 128; i++) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'subnet-btn';
+        btn.dataset.subnetId = i;
+        btn.textContent = i;
+        btn.onclick = () => setNetworkIdFromSubnet(i);
+        grid.appendChild(btn);
+      }
+      // Mark current network id as active if it matches a subnet 0..127
+      const current = parseInt(document.getElementById('stake-netuid').value, 10);
+      if (!isNaN(current) && current >= 0 && current < 128) {
+        const activeBtn = document.querySelector('.subnet-btn[data-subnet-id="' + current + '"]');
+        if (activeBtn) activeBtn.classList.add('active-subnet');
+      }
+    }
+
+    /** Bumps when a new executor fetch starts or save starts; stale responses must not overwrite UI. */
+    let _executorSettingsFetchGen = 0;
+
+    /** One rule for checkbox + label: backend default-missing is ON (same as executor_enabled !== false). */
+    function applyExecutorUiFromPayload(je) {
+      if (!je || !je.ok) return;
+      var on = je.executor_enabled !== false;
+      var ex = document.getElementById('settings-executor-enabled');
+      var lbl = document.getElementById('settings-executor-label');
+      var msg = document.getElementById('settings-executor-msg');
+      if (ex) ex.checked = on;
+      if (lbl) lbl.textContent = on ? 'Executor ON' : 'Executor OFF';
+      if (msg) msg.textContent = je.message || '';
+      window.executorEnabledForFast = on;
+      applyFastStakeExecutorUi();
+    }
+
+    // Restore persisted values as soon as DOM loads
+    document.addEventListener("DOMContentLoaded", () => {
+      stakingGateUpdateSecureContextWarning();
+      restoreAllInputs();
+      setupFieldPersistence();
+      toggleStakeLimitOptions(); // show/hide limit options per "Not limited" checkbox
+      document.getElementById('stake-not-limited').addEventListener('change', toggleStakeLimitOptions);
+      toggleRemoveLimitOptions();
+      document.getElementById('rs-not-limited').addEventListener('change', toggleRemoveLimitOptions);
+      toggleFastStakeLimitOptions();
+      document.getElementById('fs-not-limited').addEventListener('change', toggleFastStakeLimitOptions);
+      restoreActiveTab(); // new for tab persist
+      initSubnetButtons();
+      var bootExeGen = ++_executorSettingsFetchGen;
+      Promise.all([
+        fetch('/api/contract-config').then(r => r.json()),
+        fetch('/api/executor-enabled').then(r => r.json()),
+      ])
+        .then(function (results) {
+          var j = results[0];
+          var je = results[1];
+          if (j.ok) {
+            if (j.contract) window.stakeWrapContractAddress = j.contract;
+            applyEvmStakingGateUi(j);
+          } else applyFastStakeExecutorUi();
+          if (je.ok && bootExeGen === _executorSettingsFetchGen) {
+            applyExecutorUiFromPayload(je);
+          }
+        })
+        .catch(function () { applyFastStakeExecutorUi(); });
+    });
+
+    // --- Persistence END ---
+
+    const tabIds = [
+      { id: 'stake', label: 'Stake' },
+      { id: 'remove', label: 'Unstake' },
+      { id: 'fast-stake', label: 'Fast Stake' },
+      { id: 'fast-unstake', label: 'Fast Unstake' },
+      { id: 'transfer', label: 'Transfer Stake' },
+      { id: 'move', label: 'Move Stake' },
+      { id: 'withdraw', label: 'Withdraw' },
+      { id: 'settings', label: 'Settings' },
+    ];
+
+    // For tab persist, keep references to the tab buttons
+    let tabButtons = [];
+
+    // Helper to activate a tab by index
+    function activateTabByIndex(idx) {
+      document.querySelectorAll('.tabs button').forEach(x => x.classList.remove('active'));
+      document.querySelectorAll('section.panel').forEach(x => x.classList.remove('active'));
+      if (typeof idx === "number" && idx >= 0 && idx < tabButtons.length) {
+        tabButtons[idx].classList.add('active');
+        const panelId = tabButtons[idx].dataset.panel;
+        document.getElementById(panelId).classList.add('active');
+        localStorage.setItem(TAB_INDEX_KEY, idx);
+        if (panelId === 'panel-settings') { loadSettings(); }
+      }
+    }
+
+    function restoreActiveTab() {
+      const savedIdx = parseInt(localStorage.getItem(TAB_INDEX_KEY), 10);
+      if (!isNaN(savedIdx) && savedIdx >= 0 && savedIdx < tabButtons.length) {
+        activateTabByIndex(savedIdx);
+      }
+    }
+
+    tabIds.forEach((t, i) => {
+      const b = document.createElement('button');
+      b.textContent = t.label;
+      b.dataset.panel = 'panel-' + t.id;
+      if (i === 0) b.classList.add('active');
+      b.onclick = () => {
+        activateTabByIndex(i);
+      };
+      document.getElementById('tabs').appendChild(b);
+      tabButtons.push(b);
+    });
+
+    /** Stake / Unstake / Fast Stake / Fast Unstake: Enter in a field acts like the main Submit button. */
+    var PANEL_ENTER_SUBMIT_BTN = {
+      'panel-stake': 'btn-evm-stake-submit',
+      'panel-remove': 'btn-evm-unstake-submit',
+      'panel-fast-stake': 'btn-fast-stake',
+      'panel-fast-unstake': 'btn-fast-unstake',
+    };
+
+    function enterKeyShouldDelegateToPanelSubmit(target) {
+      if (!target || !target.tagName) return false;
+      var tag = target.tagName.toLowerCase();
+      if (tag === 'textarea') return false;
+      if (tag === 'button') return false;
+      if (tag === 'a') return false;
+      if (target.isContentEditable) return false;
+      if (tag === 'input') {
+        var typ = (target.type || '').toLowerCase();
+        if (typ === 'checkbox' || typ === 'radio' || typ === 'button' || typ === 'submit' || typ === 'reset' || typ === 'file' || typ === 'hidden') return false;
+        return true;
+      }
+      if (tag === 'select') return true;
+      return false;
+    }
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter') return;
+      var panel = document.querySelector('section.panel.active');
+      if (!panel) return;
+      var btnId = PANEL_ENTER_SUBMIT_BTN[panel.id];
+      if (!btnId) return;
+      if (!panel.contains(e.target)) return;
+      if (!enterKeyShouldDelegateToPanelSubmit(e.target)) return;
+      var btn = document.getElementById(btnId);
+      if (!btn || btn.disabled) return;
+      e.preventDefault();
+      btn.click();
+    });
+
+    // After all buttons are created, restore the tab if present in localStorage
+    // (Otherwise, default is first tab, just as before)
+    // (Moved the restoreActiveTab call above to after DOMContentLoaded!)
+
+    function showResult(elId, ok, text) {
+      const el = document.getElementById(elId);
+      el.className = 'result ' + (ok ? 'ok' : 'err');
+      el.innerHTML = ok ? '✅ Success<pre>' + text + '</pre>' : '❌ Error: ' + text;
+    }
+
+    async function postJson(url, body, resultId) {
+      showResult(resultId, false, 'Submitting...');
+      try {
+        const r = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        const j = await r.json();
+        if (j.ok) showResult(resultId, true, j.receipt != null ? JSON.stringify(j.receipt, null, 2) : (j.message || 'OK'));
+        else showResult(resultId, false, j.error || JSON.stringify(j));
+      } catch (e) {
+        showResult(resultId, false, String(e));
+      }
+    }
+
+    async function postFastStakeLimitAllSn28() {
+      if (!assertFastStakeUnstakeAllowed('special-ops-result')) return;
+      showResult('special-ops-result', false, 'Submitting fast stake-limit (all → SN28, MevShield)...');
+      try {
+        const r = await fetch('/api/fast-stake-limit-all-sn28', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: '{}',
+        });
+        const j = await r.json();
+        if (j.ok) {
+          const lines = [
+            j.message || 'OK',
+            'Amount: ' + j.amount_tao + ' TAO (' + j.amount_rao + ' rao)',
+            'Netuid: ' + j.netuid,
+            'Limit price (rao/alpha): ' + j.limit_price_used,
+          ];
+          showResult('special-ops-result', true, lines.join('\n'));
+        } else {
+          showResult('special-ops-result', false, j.error || JSON.stringify(j));
+        }
+      } catch (e) {
+        showResult('special-ops-result', false, String(e));
+      }
+    }
+
+    async function postStakeLimitAllSn28() {
+      if (!assertEvmStakingAllowed('special-ops-result')) return;
+      showResult('special-ops-result', false, 'Submitting stake-limit (all free → SN28, min tolerance)...');
+      try {
+        const r = await fetch('/api/stake-limit-all-sn28', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: '{}',
+        });
+        const j = await r.json();
+        if (j.ok) {
+          const lines = [
+            'Amount: ' + j.amount_tao + ' TAO (' + j.amount_rao + ' rao)',
+            'Hotkey: ' + j.hotkey_ss58,
+            'Netuid: ' + j.netuid,
+            'Limit price (rao/alpha): ' + j.limit_price_used,
+            '',
+            JSON.stringify(j.receipt, null, 2),
+          ];
+          showResult('special-ops-result', true, lines.join('\n'));
+        } else {
+          showResult('special-ops-result', false, j.error || JSON.stringify(j));
+        }
+      } catch (e) {
+        showResult('special-ops-result', false, String(e));
+      }
+    }
+
+    function postStakeOrLimit() {
+      if (!assertEvmStakingAllowed('stake-result')) return;
+      const notLimited = document.getElementById('stake-not-limited').checked;
+      if (notLimited) {
+        postJson('/api/stake', {
+          hotkey: document.getElementById('stake-hotkey').value.trim(),
+          netuid: parseInt(document.getElementById('stake-netuid').value, 10),
+          amount_tao: parseFloat(document.getElementById('stake-amount').value),
+        }, 'stake-result');
+      } else {
+        postJson('/api/stake-limit', {
+          hotkey: document.getElementById('stake-hotkey').value.trim(),
+          netuid: parseInt(document.getElementById('stake-netuid').value, 10),
+          amount_tao: parseFloat(document.getElementById('stake-amount').value),
+          rate_tolerance: parseFloat(document.getElementById('sl-tolerance').value),
+          use_min_tolerance: document.getElementById('sl-use-min').checked,
+          allow_partial: document.getElementById('sl-partial').checked,
+        }, 'stake-result');
+      }
+    }
+    async function calcMinToleranceStake() {
+      const amount = parseFloat(document.getElementById('stake-amount').value);
+      const netuid = parseInt(document.getElementById('stake-netuid').value, 10);
+      if (!amount || !netuid) {
+        showResult('stake-result', false, 'Please enter TAO amount and Netuid');
+        return;
+      }
+      showResult('stake-result', false, 'Calculating...');
+      try {
+        const r = await fetch('/api/calc-min-tolerance', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tao_amount: amount, netuid, operation: 'stake' }),
+        });
+        const j = await r.json();
+        if (j.ok) {
+          const tolEl = document.getElementById('sl-tolerance');
+          if (tolEl != null && j.rate_tolerance != null) {
+            tolEl.value = j.rate_tolerance;
+            persistAllInputs();
+          }
+          showResult('stake-result', true, `Min tolerance limit price: ${j.limit_price} rao/alpha. Rate tolerance set to ${j.rate_tolerance}`);
+        } else {
+          showResult('stake-result', false, j.error);
+        }
+      } catch (e) {
+        showResult('stake-result', false, String(e));
+      }
+    }
+    function postRemoveStakeOrLimit() {
+      if (!assertEvmStakingAllowed('rs-result')) return;
+      const notLimited = document.getElementById('rs-not-limited').checked;
+      if (notLimited) {
+        const amountValue = document.getElementById('rs-amount').value.trim();
+        const amount = amountValue === '' ? null : parseInt(amountValue, 10);
+        postJson('/api/remove-stake', {
+          hotkey: document.getElementById('rs-hotkey').value.trim(),
+          netuid: parseInt(document.getElementById('rs-netuid').value, 10),
+          amount: amount,
+        }, 'rs-result');
+      } else {
+        const amountVal = document.getElementById('rs-amount').value.trim();
+        const amount = amountVal === '' ? 0 : parseInt(amountVal, 10);
+        postJson('/api/remove-stake-limit', {
+          hotkey: document.getElementById('rs-hotkey').value.trim(),
+          netuid: parseInt(document.getElementById('rs-netuid').value, 10),
+          amount: amount,
+          rate_tolerance: parseFloat(document.getElementById('rsl-tolerance').value),
+          use_min_tolerance: document.getElementById('rsl-use-min').checked,
+          allow_partial: document.getElementById('rsl-partial').checked,
+        }, 'rs-result');
+      }
+    }
+    function postRemoveStake() {
+      if (!assertEvmStakingAllowed('rs-result')) return;
+      const amountValue = document.getElementById('rs-amount').value.trim();
+      const amount = amountValue === '' ? null : parseInt(amountValue, 10);
+      postJson('/api/remove-stake', {
+        hotkey: document.getElementById('rs-hotkey').value.trim(),
+        netuid: parseInt(document.getElementById('rs-netuid').value, 10),
+        amount: amount,
+      }, 'rs-result');
+    }
+    async function calcMinToleranceUnstake() {
+      const amountVal = document.getElementById('rs-amount').value.trim();
+      const amount = amountVal === '' ? 0 : parseInt(amountVal, 10);
+      const netuid = parseInt(document.getElementById('rs-netuid').value, 10);
+      if (!amount || !netuid) {
+        showResult('rs-result', false, 'Please enter amount and Netuid');
+        return;
+      }
+      const amount_tao = amount / 1e9;  // Convert alpha raw to TAO
+      showResult('rs-result', false, 'Calculating...');
+      try {
+        const r = await fetch('/api/calc-min-tolerance', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tao_amount: amount_tao, netuid, operation: 'unstake' }),
+        });
+        const j = await r.json();
+        if (j.ok) {
+          const tolEl = document.getElementById('rsl-tolerance');
+          if (tolEl != null && j.rate_tolerance != null) {
+            tolEl.value = j.rate_tolerance;
+            persistAllInputs();
+          }
+          showResult('rs-result', true, `Min tolerance limit price: ${j.limit_price} rao/alpha. Rate tolerance set to ${j.rate_tolerance}`);
+        } else {
+          showResult('rs-result', false, j.error);
+        }
+      } catch (e) {
+        showResult('rs-result', false, String(e));
+      }
+    }
+    function postTransferStake() {
+      const raw = document.getElementById('ts-amount').value.trim();
+      const hotkey = document.getElementById('ts-hotkey').value.trim();
+      const origin_netuid = parseInt(document.getElementById('ts-origin').value, 10);
+      const destination_netuid = parseInt(document.getElementById('ts-dest').value, 10);
+      if (raw === '') {
+        postJson('/api/transfer-stake', {
+          hotkey,
+          origin_netuid,
+          destination_netuid,
+          amount_tao: null,
+        }, 'ts-result');
+        return;
+      }
+      const amount_tao = parseFloat(raw);
+      if (!Number.isFinite(amount_tao)) {
+        showResult('ts-result', false, 'Invalid amount');
+        return;
+      }
+      postJson('/api/transfer-stake', {
+        hotkey,
+        origin_netuid,
+        destination_netuid,
+        amount_tao,
+      }, 'ts-result');
+    }
+    function postMoveStake() {
+      if (!assertEvmStakingAllowed('ms-result')) return;
+      const amountVal = document.getElementById('ms-amount').value.trim();
+      postJson('/api/move-stake', {
+        origin_hotkey: document.getElementById('ms-origin-hotkey').value.trim(),
+        destination_hotkey: document.getElementById('ms-dest-hotkey').value.trim(),
+        origin_netuid: parseInt(document.getElementById('ms-origin').value, 10),
+        destination_netuid: parseInt(document.getElementById('ms-dest').value, 10),
+        amount_tao: amountVal === '' ? null : parseFloat(amountVal),
+      }, 'ms-result');
+    }
+    function postWithdraw() {
+      const raw = document.getElementById('wd-amount').value.trim();
+      if (raw === '') {
+        postJson('/api/withdraw', { amount_tao: null }, 'wd-result');
+        return;
+      }
+      const amount_tao = parseFloat(raw);
+      if (!Number.isFinite(amount_tao)) {
+        showResult('wd-result', false, 'Invalid amount');
+        return;
+      }
+      postJson('/api/withdraw', { amount_tao }, 'wd-result');
+    }
+
+    function setFastStakeAmount(amount) {
+      const el = document.getElementById('fs-amount');
+      if (el) { el.value = String(amount); persistAllInputs(); }
+    }
+    function postFastStakeOrLimit() {
+      if (!assertFastStakeUnstakeAllowed('fs-result')) return;
+      const notLimited = document.getElementById('fs-not-limited').checked;
+      const netuid = parseInt(document.getElementById('fs-netuid').value, 10);
+      const amount_tao = parseFloat(document.getElementById('fs-amount').value);
+      if (notLimited) {
+        postJson('/api/fast-stake', { netuid, amount_tao }, 'fs-result');
+      } else {
+        postJson('/api/fast-stake-limit', {
+          netuid,
+          amount_tao,
+          rate_tolerance: parseFloat(document.getElementById('fsl-tolerance').value),
+          use_min_tolerance: document.getElementById('fsl-use-min').checked,
+        }, 'fs-result');
+      }
+    }
+    async function calcMinToleranceFastStake() {
+      if (!assertFastStakeUnstakeAllowed('fs-result')) return;
+      const amount_tao = parseFloat(document.getElementById('fs-amount').value);
+      const netuid = parseInt(document.getElementById('fs-netuid').value, 10);
+      if (!amount_tao || !netuid) {
+        showResult('fs-result', false, 'Please enter Amount (TAO) and Netuid');
+        return;
+      }
+      showResult('fs-result', false, 'Calculating...');
+      try {
+        const r = await fetch('/api/calc-min-tolerance', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tao_amount: amount_tao, netuid, operation: 'stake' }),
+        });
+        const j = await r.json();
+        if (j.ok) {
+          const tolEl = document.getElementById('fsl-tolerance');
+          if (tolEl != null && j.rate_tolerance != null) {
+            tolEl.value = j.rate_tolerance;
+            persistAllInputs();
+          }
+          showResult('fs-result', true, `Min tolerance limit price: ${j.limit_price} rao/alpha. Rate tolerance set to ${j.rate_tolerance}`);
+        } else {
+          showResult('fs-result', false, j.error);
+        }
+      } catch (e) {
+        showResult('fs-result', false, String(e));
+      }
+    }
+    function postFastUnstake() {
+      if (!assertFastStakeUnstakeAllowed('fu-result')) return;
+      postJson('/api/fast-unstake', {
+        netuid: parseInt(document.getElementById('fu-netuid').value, 10),
+      }, 'fu-result');
+    }
+    /** Fetch contract-config for gate banners / address only; does not repaint Contract config panel. */
+    async function syncContractGateStateFromApi() {
+      try {
+        const r = await fetch('/api/contract-config');
+        const j = await r.json();
+        if (j.ok) {
+          if (j.contract) window.stakeWrapContractAddress = j.contract;
+          applyEvmStakingGateUi(j);
+        }
+      } catch (e) { /* ignore */ }
+    }
+
+    async function loadStakeInfo() {
+      const container = document.getElementById('stake-info-container');
+      container.innerHTML = '<div class="loading">Loading stake info...</div>';
+      
+      try {
+        const r = await fetch('/api/stake-info');
+        const j = await r.json();
+        
+        if (!j.ok) {
+          container.innerHTML = '<div class="result err">Error: ' + (j.error || 'Failed to load stake info') + '</div>';
+          return;
+        }
+        
+        if (!j.stakes || j.stakes.length === 0) {
+          let html = '<div class="result" style="background: rgba(139, 156, 179, 0.15); border: 1px solid var(--muted); color: var(--muted); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">No stakes found for coldkey: ' + j.coldkey + '</div>';
+          
+          // Still show wallet info even if no stakes
+          html += '<div class="wallet-footer">';
+          html += '<div class="wallet-footer-title">Wallet:</div>';
+          html += '<div class="wallet-footer-content">';
+          html += '<div><strong>Coldkey SS58:</strong> ' + j.coldkey + '</div>';
+          html += '<div><strong>Free Balance:</strong> τ' + (j.free_balance_tao || 0).toFixed(9) + '</div>';
+          html += '<div><strong>Total Staked Value:</strong> τ' + (j.total_staked_value_tao || 0).toFixed(9) + '</div>';
+          html += '<div><strong>Total Value:</strong> τ' + (j.total_value_tao || j.free_balance_tao || 0).toFixed(9) + '</div>';
+          html += '</div>';
+          html += '</div>';
+          
+          container.innerHTML = html;
+          return;
+        }
+        
+        let html = '<table class="stake-table"><thead><tr>';
+        html += '<th>NetUID</th>';
+        html += '<th>Value (TAO)</th>';
+        html += '<th>Stake (Alpha)</th>';
+        html += '<th>Price</th>';
+        html += '<th>Hotkey</th>';
+        html += '<th>Action</th>';
+        html += '</tr></thead><tbody>';
+        
+        for (const stake of j.stakes) {
+          const hotkeyEscaped = stake.hotkey_ss58.replace(/'/g, "\\'");
+          html += '<tr>';
+          html += '<td>' + stake.netuid + '</td>';
+          html += '<td>' + stake.value_tao.toFixed(2) + '</td>';
+          html += '<td>' + stake.stake_alpha_tao.toFixed(2) + '</td>';
+          html += '<td>' + stake.price_tao.toFixed(4) + '</td>';
+          html += '<td style="font-size: 0.75rem; word-break: break-all; max-width: 200px;">' + stake.hotkey_ss58 + '</td>';
+          html += '<td>';
+          if (window.evmStakingBlocked) {
+            html += '<span class="hint" style="font-size:0.8rem;">Stake ops off</span>';
+          } else {
+            html += '<button class="unstake-btn" onclick="unstakeFromTable(' + stake.netuid + ', \'' + hotkeyEscaped + '\', ' + stake.stake_alpha_rao + ')">Unstake</button>';
+            var defaultHotkeySS58 = '5Gq2gs4ft5dhhjbHabvVbAhjMCV2RgKmVJKAFCUWiirbRT21';
+            if (stake.hotkey_ss58 == defaultHotkeySS58) {
+              var fastOk = window.executorEnabledForFast !== false;
+              if (fastOk) {
+                html += ' <button class="unstake-btn" onclick="fastUnstakeFromTable(' + stake.netuid + ')">Fast Unstake</button>';
+              } else {
+                html += ' <span class="hint" style="font-size:0.8rem;" title="Turn Executor ON in Settings">Fast off</span>';
+              }
+            }
+          }
+          html += '</td>';
+          html += '</tr>';
+        }
+        
+        html += '</tbody></table>';
+        
+        // Add wallet info footer
+        html += '<div class="wallet-footer">';
+        html += '<div class="wallet-footer-title">Wallet:</div>';
+        html += '<div class="wallet-footer-content">';
+        html += '<div><strong>Coldkey SS58:</strong> ' + j.coldkey + '</div>';
+        html += '<div><strong>Free Balance:</strong> τ' + j.free_balance_tao.toFixed(9) + '</div>';
+        html += '<div><strong>Total Staked Value:</strong> τ' + j.total_staked_value_tao.toFixed(9) + '</div>';
+        html += '<div><strong>Total Value:</strong> τ' + j.total_value_tao.toFixed(9) + '</div>';
+        html += '</div>';
+        html += '</div>';
+        
+        container.innerHTML = html;
+      } catch (e) {
+        container.innerHTML = '<div class="result err">Error: ' + String(e) + '</div>';
+      }
+    }
+
+    function unstakeFromTable(netuid, hotkey, amountAlphaRao) {
+      // Switch to Unstake tab (index 1)
+      activateTabByIndex(1);
+      
+      // Fill the form fields
+      document.getElementById('rs-netuid').value = netuid;
+      document.getElementById('rs-hotkey').value = hotkey;
+      // Leave amount empty to unstake all
+      document.getElementById('rs-amount').value = '';
+      
+      // Submit the unstake
+      postRemoveStake();
+    }
+
+    function fastUnstakeFromTable(netuid) {
+      // postFastUnstake() enforces executor + contract gate; table hides Fast Unstake when executor is OFF
+      // Switch to Fast Unstake tab (index 3: Stake=0, Unstake=1, Fast Stake=2, Fast Unstake=3)
+      activateTabByIndex(3);
+      document.getElementById('fu-netuid').value = netuid;
+      persistAllInputs();
+      postFastUnstake();
+    }
+
+    function showInlineResult(elId, ok, text) {
+      const el = document.getElementById(elId);
+      if (!el) return;
+      el.style.display = 'block';
+      el.className = 'result ' + (ok ? 'ok' : 'err');
+      el.textContent = text;
+    }
+
+    async function loadContractConfig() {
+      const container = document.getElementById('contract-config-container');
+      if (!container) return;
+      container.innerHTML = '<div class="loading">Loading contract config...</div>';
+      try {
+        const r = await fetch('/api/contract-config');
+        const j = await r.json();
+        if (!j.ok) {
+          container.innerHTML = '<div class="result err">' + (j.error || 'Failed to load') + '</div>';
+          return;
+        }
+        window.stakeWrapContractAddress = j.contract;
+        let html = '<div class="wallet-footer-title">Contract</div>';
+        html += '<div class="wallet-footer-content">';
+        html += '<div><strong>Address:</strong> ' + j.contract + '</div>';
+        html += '<div><strong>contractAccountId32:</strong> <code style="word-break: break-all; font-size: 0.8rem;">' + j.contract_account_id32 + '</code></div>';
+        html += '<div><strong>stakeInfoBaseFeeRao:</strong> ' + j.stake_info_base_fee_rao + '</div>';
+        html += '<div><strong>limitPriceBaseFeeRao:</strong> ' + j.limit_price_base_fee_rao + '</div>';
+        if (j.staking_gate_reads_ok) {
+          html += '<div><strong>Staking / unstaking enabled:</strong> ' + (j.staking_unstaking_enabled ? 'yes' : 'no') + '</div>';
+          html += '<div><strong>Gate password configured (hash on-chain):</strong> ' + (j.staking_gate_configured ? 'yes' : 'no') + '</div>';
+        } else {
+          html += '<div><strong>Staking / unstaking enabled:</strong> <span style="color: var(--muted);">unknown</span> <small class="hint">(RPC failed or old contract — redeploy gate or run <code>npm run compile</code>)</small></div>';
+          html += '<div><strong>Gate password configured:</strong> <span style="color: var(--muted);">unknown</span></div>';
+        }
+        html += '</div>';
+        container.innerHTML = html;
+        applyEvmStakingGateUi(j);
+      } catch (e) {
+        container.innerHTML = '<div class="result err">' + String(e) + '</div>';
+      }
+    }
+
+    async function loadSettings() {
+      var gen = ++_executorSettingsFetchGen;
+      try {
+        const [rt, re] = await Promise.all([
+          fetch('/api/tolerance-offset'),
+          fetch('/api/executor-enabled'),
+        ]);
+        const [jt, je] = await Promise.all([rt.json(), re.json()]);
+        if (jt.ok) {
+          const tolEl = document.getElementById('settings-tolerance-offset');
+          if (tolEl) tolEl.value = jt.tolerance_offset != null ? String(jt.tolerance_offset) : '';
+        }
+        if (je.ok && gen === _executorSettingsFetchGen) {
+          applyExecutorUiFromPayload(je);
+        }
+      } catch (e) {
+        showInlineResult('settings-tolerance-result', false, 'Failed to load settings: ' + e);
+      }
+    }
+
+    async function saveToleranceOffset() {
+      const tolVal = document.getElementById('settings-tolerance-offset').value.trim();
+      if (tolVal === '') {
+        showInlineResult('settings-tolerance-result', false, 'Enter a tolerance offset');
+        return;
+      }
+      const payload = tolVal.startsWith('*') ? tolVal : parseFloat(tolVal);
+      if (!tolVal.startsWith('*') && isNaN(payload)) {
+        showInlineResult('settings-tolerance-result', false, 'Must be a number or *multiplier');
+        return;
+      }
+      try {
+        const r = await fetch('/api/tolerance-offset', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tolerance_offset: payload }),
+        });
+        const j = await r.json();
+        if (j.ok) showInlineResult('settings-tolerance-result', true, 'Tolerance offset saved.');
+        else showInlineResult('settings-tolerance-result', false, j.error || 'Save failed');
+      } catch (e) {
+        showInlineResult('settings-tolerance-result', false, String(e));
+      }
+    }
+
+    async function saveExecutorEnabled(checked) {
+      _executorSettingsFetchGen++;
+      var exEl = document.getElementById('settings-executor-enabled');
+      try {
+        const r = await fetch('/api/executor-enabled', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ enabled: checked }),
+        });
+        const j = await r.json().catch(function () { return {}; });
+        if (r.ok && j.ok) {
+          applyExecutorUiFromPayload(j);
+          showInlineResult('settings-executor-result', true, 'Executor setting saved.');
+        } else {
+          if (exEl) exEl.checked = !checked;
+          var errText = (j && (j.detail || j.error)) ? String(j.detail || j.error) : ('HTTP ' + r.status);
+          showInlineResult('settings-executor-result', false, errText);
+        }
+      } catch (e) {
+        if (exEl) exEl.checked = !checked;
+        showInlineResult('settings-executor-result', false, String(e));
+      }
+    }
+
+  </script>
+</body>
+</html>
