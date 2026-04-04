@@ -1,5 +1,7 @@
 from web3 import Web3
 from eth_account import Account
+
+from app.globals import get_subtensor
 from app.services.extrinsics import (
     add_stake_extrinsic,
     add_stake_limit_extrinsic,
@@ -13,22 +15,16 @@ from utils.substrate_runtime_call import runtime_call_bytes
 
 
 def stake(
-    w3: Web3, 
-    account: Account, 
+    w3: Web3,
+    account: Account,
     contract_address: str,
-    hotkey: str, 
-    netuid: int, 
+    hotkey: str,
+    netuid: int,
     amount_rao: int,
     contract=None,
 ) -> dict:
-    call = add_stake_extrinsic(
-        w3,
-        account,
-        contract_address,
-        hotkey,
-        netuid,
-        amount_rao,
-    )
+    subtensor = get_subtensor()
+    call = add_stake_extrinsic(subtensor, hotkey, netuid, amount_rao)
     inner = runtime_call_bytes(call)
     receipt = proxy_call_with_runtime_call(
         w3,
@@ -43,24 +39,23 @@ def stake(
 
 
 def stake_limit(
-    w3: Web3, 
-    account: Account, 
+    w3: Web3,
+    account: Account,
     contract_address: str,
-    hotkey: str, 
-    netuid: int, 
-    limit_price: int, 
-    amount_rao: int, 
+    hotkey: str,
+    netuid: int,
+    limit_price: int,
+    amount_rao: int,
     allow_partial: bool,
     contract=None,
 ) -> dict:
+    subtensor = get_subtensor()
     call = add_stake_limit_extrinsic(
-        w3,
-        account,
-        contract_address,
+        subtensor,
         hotkey,
         netuid,
-        limit_price,
         amount_rao,
+        limit_price,
         allow_partial,
     )
     inner = runtime_call_bytes(call)
@@ -78,22 +73,16 @@ def stake_limit(
 
 
 def remove_stake(
-    w3: Web3, 
-    account: Account, 
+    w3: Web3,
+    account: Account,
     contract_address: str,
-    hotkey: str, 
-    netuid: int, 
+    hotkey: str,
+    netuid: int,
     amount_rao: int,
     contract=None,
 ) -> dict:
-    call = remove_stake_extrinsic(
-        w3,
-        account,
-        contract_address,
-        hotkey,
-        netuid,
-        amount_rao,
-    )
+    subtensor = get_subtensor()
+    call = remove_stake_extrinsic(subtensor, hotkey, netuid, amount_rao)
     inner = runtime_call_bytes(call)
     receipt = proxy_call_with_runtime_call(
         w3,
@@ -109,21 +98,24 @@ def remove_stake(
 
 
 def remove_stake_limit(
-    w3: Web3, 
-    account: Account, 
+    w3: Web3,
+    account: Account,
     contract_address: str,
-    hotkey: str, 
-    netuid: int, 
+    hotkey: str,
+    netuid: int,
+    limit_price: int,
     amount_rao: int,
+    allow_partial: bool,
     contract=None,
 ) -> dict:
+    subtensor = get_subtensor()
     call = remove_stake_limit_extrinsic(
-        w3,
-        account,
-        contract_address,
+        subtensor,
         hotkey,
         netuid,
         amount_rao,
+        limit_price,
+        allow_partial,
     )
     inner = runtime_call_bytes(call)
     receipt = proxy_call_with_runtime_call(
@@ -140,20 +132,19 @@ def remove_stake_limit(
 
 
 def move_stake(
-    w3: Web3, 
-    account: Account, 
+    w3: Web3,
+    account: Account,
     contract_address: str,
-    origin_hotkey: str, 
-    destination_hotkey: str, 
-    origin_netuid: int, 
-    destination_netuid: int, 
+    origin_hotkey: str,
+    destination_hotkey: str,
+    origin_netuid: int,
+    destination_netuid: int,
     amount_rao: int,
     contract=None,
 ) -> dict:
+    subtensor = get_subtensor()
     call = move_stake_extrinsic(
-        w3,
-        account,
-        contract_address,
+        subtensor,
         origin_hotkey,
         destination_hotkey,
         origin_netuid,
@@ -171,4 +162,3 @@ def move_stake(
         contract=contract,
     )
     return receipt
-
