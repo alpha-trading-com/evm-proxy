@@ -1,17 +1,38 @@
 {
-  "contract_address": "0xB08e640fA126A3260fBfAE6E47B26b8658F1D201",
-  "contract_ss58": "5FaqtwgVqiCx75APsfWkvJWmy4eNP32T4A6ko8PQ6B3MS93B",
+  "contract_address": "0x615f611f8778dd753c51a573F8A6d81A122f5828",
+  "contract_ss58": "5C8WD8WF62AtLtJG8ATdWpye8y3YZbQyaJbD3pK5Q7ma8sx4",
   "principal_ss58": "5DLXqvT8opsF8foDRZY8X7siJ87Y9Hgf8izukV1WHqNVM4Fh",
   "proxy_type": "Any",
   "proxy_delay": 0,
   "deployer_evm": "0x03E60e331D331e687C8Fa055c40B85D8cBCC4f72",
-  "evm_tx": "c1702fff8281e5b10cd8eaeb8cf94a959710ae1f560ad418f24ccaffef720489",
+  "evm_tx": "0e58f0f13557e44fa6cdbdf24a159f8ad2629f7af55895ca7369c86fa6580ea4",
   "chain_id": 964,
   "abi": [
     {
       "inputs": [],
       "stateMutability": "nonpayable",
       "type": "constructor"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "currentPriceRao",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "refPriceRao",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bool",
+          "name": "requireAbove",
+          "type": "bool"
+        }
+      ],
+      "name": "AlphaPriceCompareFailed",
+      "type": "error"
     },
     {
       "inputs": [],
@@ -55,6 +76,44 @@
         }
       ],
       "name": "proxyCall",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint16",
+          "name": "netuid",
+          "type": "uint16"
+        },
+        {
+          "internalType": "uint256",
+          "name": "refPriceRaoPerAlpha",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bool",
+          "name": "requireAbove",
+          "type": "bool"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "realAccountId32",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "uint8",
+          "name": "proxyType",
+          "type": "uint8"
+        },
+        {
+          "internalType": "bytes",
+          "name": "call",
+          "type": "bytes"
+        }
+      ],
+      "name": "proxyCallIfAlphaPriceAbove",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
