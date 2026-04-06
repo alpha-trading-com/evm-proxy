@@ -154,7 +154,7 @@ def proxy_call_if_alpha_price_above_with_runtime_call(
 
     tx = contract.functions.proxyCallIfAlphaPriceAbove(
         int(netuid),
-        int(ref_price_rao_per_alpha),
+        int(ref_price_rao_per_alpha * 10**9),
         bool(require_above),
         real_bytes,
         int(proxy_type),
