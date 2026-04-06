@@ -2,6 +2,7 @@
 pragma solidity ^0.8.4;
 
 import "./IProxy.sol";
+import "./IAlpah.sol";
 
 /// @title DelegateProxyCaller
 /// @notice Minimal helper contract that can perform Proxy::proxyCall toward a
@@ -9,6 +10,8 @@ import "./IProxy.sol";
 contract DelegateProxyCaller {
     error OnlyOwner();
     error ProxyCallFailed();
+    /// @dev Reverts when ``getAlphaPrice(netuid)`` is not strictly greater than ``minPriceRaoPerAlpha``.
+    error AlphaPriceNotAboveMin(uint256 currentPriceRao, uint256 minPriceRao);
 
     address public owner;
     
@@ -34,11 +37,34 @@ contract DelegateProxyCaller {
         uint8 proxyType,
         bytes calldata call
     ) external onlyOwner {
-        // Build single-element forceProxyType array.
+        _proxyCall(realAccountId32, proxyType, call);
+    }
+
+    /// @notice Like ``proxyCall``, but only runs if subnet alpha price (RAO per alpha from Alpha precompile) is strictly greater than ``minPriceRaoPerAlpha``.
+    /// @param netuid Subnet id passed to ``IAlpha.getAlphaPrice``.
+    /// @param minPriceRaoPerAlpha Exclusive lower bound; revert if ``getAlphaPrice(netuid) <=`` this value.
+    function proxyCallIfAlphaPriceAbove(
+        uint16 netuid,
+        uint256 minPriceRaoPerAlpha,
+        bytes32 realAccountId32,
+        uint8 proxyType,
+        bytes calldata call
+    ) external onlyOwner {
+        uint256 price = IAlpha(IALPHA_ADDRESS).getAlphaPrice(netuid);
+        if (price <= minPriceRaoPerAlpha) {
+            revert AlphaPriceNotAboveMin(price, minPriceRaoPerAlpha);
+        }
+        _proxyCall(realAccountId32, proxyType, call);
+    }
+
+    function _proxyCall(
+        bytes32 realAccountId32,
+        uint8 proxyType,
+        bytes calldata call
+    ) internal {
         uint8[] memory forceProxyType = new uint8[](1);
         forceProxyType[0] = proxyType;
 
-        // Copy bytes into uint8[] as required by the precompile ABI.
         uint8[] memory callAsUint8 = new uint8[](call.length);
         for (uint256 i = 0; i < call.length; i++) {
             callAsUint8[i] = uint8(call[i]);
@@ -51,7 +77,6 @@ contract DelegateProxyCaller {
             callAsUint8
         );
 
-        // Forward remaining gas so the precompile has enough to execute and bubble up errors.
         uint256 gasForward = gasleft();
         // solhint-disable-next-line avoid-low-level-calls
         (bool success, ) = IPROXY_ADDRESS.call{gas: gasForward}(data);

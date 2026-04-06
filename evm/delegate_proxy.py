@@ -6,6 +6,8 @@ the old evm.stake_wrap API but targets the DelegateProxyCaller contract:
 
 - owner() view returns (address)
 - proxyCall(bytes32 realAccountId32, uint8 proxyType, bytes call)
+- proxyCallIfAlphaPriceAbove(netuid, minPriceRaoPerAlpha, ...) — Alpha precompile price gate
+- ``proxy_call_if_alpha_price_above_with_runtime_call`` — Python helper for the gated call
 """
 
 import sys
@@ -38,6 +40,19 @@ CONTRACT_ABI: List[Dict[str, Any]] = [
             {"internalType": "bytes", "name": "call", "type": "bytes"},
         ],
         "name": "proxyCall",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function",
+    },
+    {
+        "inputs": [
+            {"internalType": "uint16", "name": "netuid", "type": "uint16"},
+            {"internalType": "uint256", "name": "minPriceRaoPerAlpha", "type": "uint256"},
+            {"internalType": "bytes32", "name": "realAccountId32", "type": "bytes32"},
+            {"internalType": "uint8", "name": "proxyType", "type": "uint8"},
+            {"internalType": "bytes", "name": "call", "type": "bytes"},
+        ],
+        "name": "proxyCallIfAlphaPriceAbove",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function",
@@ -104,3 +119,50 @@ def proxy_call_with_runtime_call(
     receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
     print("test3", file=sys.stderr)
     return receipt
+
+
+def proxy_call_if_alpha_price_above_with_runtime_call(
+    w3: Web3,
+    account: Account,
+    contract_address: str,
+    *,
+    netuid: int,
+    min_price_rao_per_alpha: int,
+    proxy_type: int,
+    runtime_call: Any,
+    real_ss58: SS58,
+    contract=None,
+) -> TxReceipt:
+    """
+    Submit ``DelegateProxyCaller.proxyCallIfAlphaPriceAbove`` with SCALE-encoded inner call.
+
+    On-chain, the proxy precompile runs only if ``getAlphaPrice(netuid) > min_price_rao_per_alpha``
+    (RAO per alpha, same as ``IAlpha.getAlphaPrice``). Otherwise the tx reverts with
+    ``AlphaPriceNotAboveMin``.
+
+    ``runtime_call`` and ``real_ss58`` follow the same rules as
+    :func:`proxy_call_with_runtime_call`.
+    """
+    real_bytes = ss58_to_bytes32(real_ss58.strip())
+    call_bytes = runtime_call_bytes(runtime_call)
+
+    if contract is None:
+        contract = get_contract(w3, contract_address)
+
+    tx = contract.functions.proxyCallIfAlphaPriceAbove(
+        int(netuid),
+        int(min_price_rao_per_alpha),
+        real_bytes,
+        int(proxy_type),
+        call_bytes,
+    ).build_transaction(
+        {
+            "from": account.address,
+            "nonce": w3.eth.get_transaction_count(account.address),
+            "gas": int(2_000_000),
+            "gasPrice": w3.eth.gas_price,
+        }
+    )
+    signed = account.sign_transaction(tx)
+    tx_hash = w3.eth.send_raw_transaction(signed.raw_transaction)
+    return w3.eth.wait_for_transaction_receipt(tx_hash)
