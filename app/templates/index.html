@@ -177,6 +177,37 @@
         <div id="stake-result"></div>
       </section>
 
+      <section class="panel" id="panel-stake-if">
+        <h2>Stake (if price)</h2>
+        <small class="hint">Uses <code>proxyCallIfAlphaPriceAbove</code>: runs market <code>add_stake</code> only if subnet alpha price (RAO per alpha from chain) is strictly above or below your reference. Reference is in TAO per alpha (same as Stake Info &quot;Price&quot;).</small>
+        <label>Reference price (TAO per alpha)</label>
+        <input id="sif-ref-price" type="number" step="any" placeholder="e.g. 0.0123" />
+        <label style="margin-top: 0.75rem;">
+          <input id="sif-require-above" type="checkbox" checked /> Execute only if current price is <strong>above</strong> reference (uncheck for <strong>below</strong>)
+        </label>
+        <label>Amount (TAO)</label>
+        <div class="amount-input-row">
+          <input id="sif-amount" type="number" step="any" placeholder="e.g. 0.1" />
+          <div class="amount-presets-row">
+            <button type="button" class="amount-preset-btn" onclick="setSifTaoAmount(300)">300</button>
+            <button type="button" class="amount-preset-btn" onclick="setSifTaoAmount(250)">250</button>
+            <button type="button" class="amount-preset-btn" onclick="setSifTaoAmount(200)">200</button>
+            <button type="button" class="amount-preset-btn" onclick="setSifTaoAmount(150)">150</button>
+            <button type="button" class="amount-preset-btn" onclick="setSifTaoAmount(100)">100</button>
+            <button type="button" class="amount-preset-btn" onclick="setSifTaoAmount(50)">50</button>
+            <button type="button" class="amount-preset-btn" onclick="setSifTaoAmount(30)">30</button>
+          </div>
+        </div>
+        <label>Netuid</label>
+        <div class="amount-input-row">
+          <input id="sif-netuid" type="number" value="1" style="max-width: 8rem;" />
+          <button type="button" id="btn-sif-submit" class="submit" onclick="postStakeIfPrice()" style="margin-top: 0;">Submit</button>
+        </div>
+        <label>Hotkey (SS58 or 0x...)</label>
+        <input id="sif-hotkey" placeholder="5... or 0x..." value="5Gq2gs4ft5dhhjbHabvVbAhjMCV2RgKmVJKAFCUWiirbRT21" />
+        <div id="sif-result"></div>
+      </section>
+
       <section class="panel" id="panel-remove">
         <h2>Unstake</h2>
         <small class="hint">Leave amount empty to unstake all. Use a fraction between 0 and 1 (e.g. 0.5 = half). Otherwise enter an amount in TAO (converted on the server).</small>
@@ -210,6 +241,45 @@
           </div>
         </div>
         <div id="rs-result"></div>
+      </section>
+
+      <section class="panel" id="panel-remove-if">
+        <h2>Unstake (if price)</h2>
+        <small class="hint">Same price gate as Stake (if price): unstake runs only if alpha price vs reference passes the check, then market or limit unstake executes.</small>
+        <label>Reference price (TAO per alpha)</label>
+        <input id="uif-ref-price" type="number" step="any" placeholder="e.g. 0.0123" />
+        <label style="margin-top: 0.75rem;">
+          <input id="uif-require-above" type="checkbox" checked /> Execute only if current price is <strong>above</strong> reference (uncheck for <strong>below</strong>)
+        </label>
+        <label style="margin-top: 0.5rem;">
+          <input id="uif-not-limited" type="checkbox" checked /> Not limited (market unstake after gate)
+        </label>
+        <label>Amount (empty = all, or 0–1 = fraction, or TAO)</label>
+        <input id="uif-amount" type="number" placeholder="e.g. 100000000 (empty = all)" />
+        <label>Netuid</label>
+        <div class="amount-input-row">
+          <input id="uif-netuid" type="number" value="1" style="max-width: 8rem;" />
+          <button type="button" id="btn-uif-submit" class="submit" onclick="postRemoveStakeIfPrice()" style="margin-top: 0;">Submit</button>
+        </div>
+        <label>Hotkey</label>
+        <input id="uif-hotkey" placeholder="5... or 0x..." value="5Gq2gs4ft5dhhjbHabvVbAhjMCV2RgKmVJKAFCUWiirbRT21" />
+        <div id="uif-limit-options" style="display: none;">
+          <div class="stake-limit-row" style="display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; margin-top: 0.5rem;">
+            <label style="margin: 0; display: flex; align-items: center; gap: 0.35rem;">
+              <span>Rate Tolerance</span>
+              <input id="uif-tolerance" type="number" step="any" value="0.5" placeholder="e.g. 0.5" style="width: 5rem; margin: 0;" />
+            </label>
+            <label style="margin: 0;">
+              <input id="uif-use-min" type="checkbox" /> Use Minimum Tolerance
+            </label>
+            <label style="margin: 0;">
+              <input id="uif-partial" type="checkbox" /> Allow partial fill
+            </label>
+            <small class="hint" style="margin: 0;">Ignored when &quot;Use Minimum Tolerance&quot; is checked</small>
+            <button type="button" class="refresh-btn" style="margin: 0;" onclick="calcMinToleranceUif()">Calculate Min Tolerance</button>
+          </div>
+        </div>
+        <div id="uif-result"></div>
       </section>
 
       <section class="panel" id="panel-move">
@@ -264,8 +334,11 @@
     const PERSISTED_FIELDS = [
       "stake-hotkey", "stake-netuid", "stake-amount", "stake-not-limited",
       "sl-tolerance", "sl-use-min", "sl-partial",
+      "sif-hotkey", "sif-netuid", "sif-amount", "sif-ref-price", "sif-require-above",
       "rs-hotkey", "rs-netuid", "rs-amount", "rs-not-limited",
       "rsl-tolerance", "rsl-use-min", "rsl-partial",
+      "uif-hotkey", "uif-netuid", "uif-amount", "uif-ref-price", "uif-require-above", "uif-not-limited",
+      "uif-tolerance", "uif-use-min", "uif-partial",
       "ms-origin-hotkey", "ms-dest-hotkey", "ms-origin", "ms-dest", "ms-amount",
     ];
 
@@ -321,12 +394,18 @@
       }
     }
 
-    // Subnet ID buttons: 0..127 — clicking sets Stake / Unstake netuid fields
-    const SUBNET_NETWORK_IDS = ['stake-netuid', 'rs-netuid'];
+    // Subnet ID buttons: 0..127 — clicking sets Stake / Unstake / gated netuid fields
+    const SUBNET_NETWORK_IDS = ['stake-netuid', 'rs-netuid', 'sif-netuid', 'uif-netuid'];
     function setTaoAmount(amount) {
       const val = String(amount);
       const stakeEl = document.getElementById('stake-amount');
       if (stakeEl) stakeEl.value = val;
+      persistAllInputs();
+    }
+    function setSifTaoAmount(amount) {
+      const val = String(amount);
+      const el = document.getElementById('sif-amount');
+      if (el) el.value = val;
       persistAllInputs();
     }
     function toggleStakeLimitOptions() {
@@ -337,6 +416,11 @@
     function toggleRemoveLimitOptions() {
       const notLimited = document.getElementById('rs-not-limited').checked;
       const opts = document.getElementById('remove-limit-options');
+      if (opts) opts.style.display = notLimited ? 'none' : 'block';
+    }
+    function toggleUifLimitOptions() {
+      const notLimited = document.getElementById('uif-not-limited').checked;
+      const opts = document.getElementById('uif-limit-options');
       if (opts) opts.style.display = notLimited ? 'none' : 'block';
     }
     function setNetworkIdFromSubnet(subnetId) {
@@ -378,6 +462,8 @@
       document.getElementById('stake-not-limited').addEventListener('change', toggleStakeLimitOptions);
       toggleRemoveLimitOptions();
       document.getElementById('rs-not-limited').addEventListener('change', toggleRemoveLimitOptions);
+      toggleUifLimitOptions();
+      document.getElementById('uif-not-limited').addEventListener('change', toggleUifLimitOptions);
       restoreActiveTab();
       initSubnetButtons();
     });
@@ -386,7 +472,9 @@
 
     const tabIds = [
       { id: 'stake', label: 'Stake' },
+      { id: 'stake-if', label: 'Stake (if price)' },
       { id: 'remove', label: 'Unstake' },
+      { id: 'remove-if', label: 'Unstake (if price)' },
       { id: 'move', label: 'Move Stake' },
       { id: 'settings', label: 'Settings' },
     ];
@@ -429,7 +517,9 @@
     /** Stake / Unstake / Fast Stake / Fast Unstake: Enter in a field acts like the main Submit button. */
     var PANEL_ENTER_SUBMIT_BTN = {
       'panel-stake': 'btn-evm-stake-submit',
+      'panel-stake-if': 'btn-sif-submit',
       'panel-remove': 'btn-evm-unstake-submit',
+      'panel-remove-if': 'btn-uif-submit',
       'panel-move': 'btn-evm-move-submit',
     };
 
@@ -482,8 +572,12 @@
           body: JSON.stringify(body),
         });
         const j = await r.json();
-        if (j.ok) showResult(resultId, true, j.receipt != null ? JSON.stringify(j.receipt, null, 2) : (j.message || 'OK'));
-        else showResult(resultId, false, j.error || JSON.stringify(j));
+        if (j.ok) {
+          var main = j.receipt != null ? JSON.stringify(j.receipt, null, 2) : (j.message || 'OK');
+          if (j.limit_price_used != null) main += '\n\nlimit_price_used: ' + j.limit_price_used;
+          if (j.ref_price_rao_per_alpha_used != null) main += '\nref_price_rao_per_alpha_used: ' + j.ref_price_rao_per_alpha_used;
+          showResult(resultId, true, main);
+        } else showResult(resultId, false, j.error || JSON.stringify(j));
       } catch (e) {
         showResult(resultId, false, String(e));
       }
@@ -577,6 +671,95 @@
         netuid: parseInt(document.getElementById('rs-netuid').value, 10),
         amount: parsed.value,
       }, 'rs-result');
+    }
+
+    function postStakeIfPrice() {
+      const ref = parseFloat(document.getElementById('sif-ref-price').value);
+      if (!Number.isFinite(ref) || ref <= 0) {
+        showResult('sif-result', false, 'Enter a valid reference price (TAO per alpha)');
+        return;
+      }
+      postJson('/api/stake-if-price', {
+        hotkey: document.getElementById('sif-hotkey').value.trim(),
+        netuid: parseInt(document.getElementById('sif-netuid').value, 10),
+        amount_tao: parseFloat(document.getElementById('sif-amount').value),
+        ref_price_tao_per_alpha: ref,
+        require_above: document.getElementById('sif-require-above').checked,
+        not_limited: true,
+      }, 'sif-result');
+    }
+
+    function parseOptionalUifAmount() {
+      const raw = document.getElementById('uif-amount').value.trim();
+      if (raw === '') return { ok: true, value: null };
+      const x = parseFloat(raw);
+      if (!Number.isFinite(x)) {
+        showResult('uif-result', false, 'Invalid amount');
+        return { ok: false };
+      }
+      return { ok: true, value: x };
+    }
+
+    function postRemoveStakeIfPrice() {
+      const ref = parseFloat(document.getElementById('uif-ref-price').value);
+      if (!Number.isFinite(ref) || ref <= 0) {
+        showResult('uif-result', false, 'Enter a valid reference price (TAO per alpha)');
+        return;
+      }
+      const parsed = parseOptionalUifAmount();
+      if (!parsed.ok) return;
+      const notLimited = document.getElementById('uif-not-limited').checked;
+      var body = {
+        hotkey: document.getElementById('uif-hotkey').value.trim(),
+        netuid: parseInt(document.getElementById('uif-netuid').value, 10),
+        amount: parsed.value,
+        ref_price_tao_per_alpha: ref,
+        require_above: document.getElementById('uif-require-above').checked,
+        not_limited: notLimited,
+      };
+      if (!notLimited) {
+        body.rate_tolerance = parseFloat(document.getElementById('uif-tolerance').value);
+        body.use_min_tolerance = document.getElementById('uif-use-min').checked;
+        body.allow_partial = document.getElementById('uif-partial').checked;
+      }
+      postJson('/api/remove-stake-if-price', body, 'uif-result');
+    }
+
+    async function calcMinToleranceUif() {
+      const parsed = parseOptionalUifAmount();
+      if (!parsed.ok) return;
+      if (parsed.value === null) {
+        showResult('uif-result', false, 'Enter an amount for limit tolerance calc (or use market unstake for unstake all).');
+        return;
+      }
+      const amount = parsed.value;
+      const netuid = parseInt(document.getElementById('uif-netuid').value, 10);
+      if (!Number.isFinite(amount) || amount <= 0 || Number.isNaN(netuid)) {
+        showResult('uif-result', false, 'Please enter a valid amount and Netuid (netuid may be 0).');
+        return;
+      }
+      const amount_tao = amount >= 1e6 ? amount / 1e9 : amount;
+      showResult('uif-result', false, 'Calculating...');
+      try {
+        const r = await fetch('/api/calc-min-tolerance', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tao_amount: amount_tao, netuid, operation: 'unstake' }),
+        });
+        const j = await r.json();
+        if (j.ok) {
+          const tolEl = document.getElementById('uif-tolerance');
+          if (tolEl != null && j.rate_tolerance != null) {
+            tolEl.value = j.rate_tolerance;
+            persistAllInputs();
+          }
+          showResult('uif-result', true, 'Min tolerance limit price: ' + j.limit_price + ' rao/alpha. Rate tolerance set to ' + j.rate_tolerance);
+        } else {
+          showResult('uif-result', false, j.error);
+        }
+      } catch (e) {
+        showResult('uif-result', false, String(e));
+      }
     }
     async function calcMinToleranceUnstake() {
       const parsed = parseOptionalUnstakeAmount('rs-result');

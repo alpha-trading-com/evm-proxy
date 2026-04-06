@@ -22,6 +22,7 @@ from evm.contract import (
 )
 from evm.delegate_proxy import (
     CONTRACT_ABI,
+    proxy_call_if_alpha_price_above_with_runtime_call,
     proxy_call_with_runtime_call,
 )
 
@@ -41,5 +42,6 @@ __all__ = [
     "load_deployment_info",
     "get_contract",
     "CONTRACT_ABI",
+    "proxy_call_if_alpha_price_above_with_runtime_call",
     "proxy_call_with_runtime_call",
 ]

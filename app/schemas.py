@@ -17,6 +17,20 @@ class StakeLimitBody(BaseModel):
     allow_partial: bool = False
 
 
+class StakeIfPriceBody(BaseModel):
+    """Stake (market or limit) only if subnet alpha price vs reference passes the check (EVM precompile gate)."""
+
+    hotkey: str
+    netuid: int
+    amount_tao: float
+    ref_price_tao_per_alpha: float
+    require_above: bool = True
+    not_limited: bool = True
+    rate_tolerance: float = 0.5
+    use_min_tolerance: bool = False
+    allow_partial: bool = False
+
+
 class RemoveStakeBody(BaseModel):
     hotkey: str
     netuid: int
@@ -27,6 +41,20 @@ class RemoveStakeLimitBody(BaseModel):
     hotkey: str
     netuid: int
     amount: float | None = None
+    rate_tolerance: float = 0.5
+    use_min_tolerance: bool = False
+    allow_partial: bool = False
+
+
+class RemoveStakeIfPriceBody(BaseModel):
+    """Unstake (market or limit) only if alpha price vs reference passes the check."""
+
+    hotkey: str
+    netuid: int
+    amount: float | None = None
+    ref_price_tao_per_alpha: float
+    require_above: bool = True
+    not_limited: bool = True
     rate_tolerance: float = 0.5
     use_min_tolerance: bool = False
     allow_partial: bool = False

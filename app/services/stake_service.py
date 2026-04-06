@@ -5,7 +5,17 @@ from web3 import Web3
 
 from app.globals import get_coldkey_ss58, get_subtensor
 from app.services.evm_service import get_w3_account_contract, receipt_to_dict, run_quiet
-from app.services.evm import stake, stake_limit, remove_stake, remove_stake_limit, move_stake
+from app.services.evm import (
+    move_stake,
+    remove_stake,
+    remove_stake_if_price,
+    remove_stake_limit,
+    remove_stake_limit_if_price,
+    stake,
+    stake_if_price,
+    stake_limit,
+    stake_limit_if_price,
+)
 from utils.tolerance import calculate_stake_limit_price, calculate_unstake_limit_price
 from app.core.config import settings
 
@@ -67,6 +77,82 @@ def do_stake(hotkey: str, netuid: int, amount_rao: int) -> dict:
     return {"ok": True, "receipt": receipt_to_dict(receipt)}
 
 
+def _ref_price_rao(ref_price_tao_per_alpha: float) -> int:
+    return int(ref_price_tao_per_alpha * 10**9)
+
+
+def do_stake_if_price(
+    hotkey: str,
+    netuid: int,
+    amount_rao: int,
+    ref_price_tao_per_alpha: float,
+    require_above: bool,
+) -> dict:
+    ref_rao = _ref_price_rao(ref_price_tao_per_alpha)
+    w3, account, contract_address, contract = get_w3_account_contract()
+    receipt = run_quiet(
+        stake_if_price,
+        w3,
+        account,
+        contract_address,
+        hotkey,
+        netuid,
+        amount_rao,
+        ref_rao,
+        require_above,
+        contract=contract,
+    )
+    return {
+        "ok": True,
+        "receipt": receipt_to_dict(receipt),
+        "ref_price_rao_per_alpha_used": ref_rao,
+    }
+
+
+def do_stake_limit_if_price(
+    hotkey: str,
+    netuid: int,
+    amount_rao: int,
+    rate_tolerance: float,
+    use_min_tolerance: bool,
+    allow_partial: bool,
+    ref_price_tao_per_alpha: float,
+    require_above: bool,
+) -> dict:
+    subtensor = get_subtensor()
+    limit_price = int(
+        calculate_stake_limit_price(
+            tao_amount=amount_rao / 10**9,
+            netuid=netuid,
+            min_tolerance_staking=use_min_tolerance,
+            default_rate_tolerance=rate_tolerance,
+            subtensor=subtensor,
+        )
+    )
+    ref_rao = _ref_price_rao(ref_price_tao_per_alpha)
+    w3, account, contract_address, contract = get_w3_account_contract()
+    receipt = run_quiet(
+        stake_limit_if_price,
+        w3,
+        account,
+        contract_address,
+        hotkey,
+        netuid,
+        limit_price,
+        amount_rao,
+        allow_partial,
+        ref_rao,
+        require_above,
+        contract=contract,
+    )
+    return {
+        "ok": True,
+        "receipt": receipt_to_dict(receipt),
+        "limit_price_used": limit_price,
+        "ref_price_rao_per_alpha_used": ref_rao,
+    }
+
+
 def do_stake_limit(
     hotkey: str, netuid: int, amount_rao: int,
     rate_tolerance: float, use_min_tolerance: bool, allow_partial: bool,
@@ -95,6 +181,79 @@ def do_remove_stake(hotkey: str, netuid: int, amount_alpha_rao: int) -> dict:
         contract=contract,
     )
     return {"ok": True, "receipt": receipt_to_dict(receipt)}
+
+
+def do_remove_stake_if_price(
+    hotkey: str,
+    netuid: int,
+    amount_alpha_rao: int,
+    ref_price_tao_per_alpha: float,
+    require_above: bool,
+) -> dict:
+    ref_rao = _ref_price_rao(ref_price_tao_per_alpha)
+    w3, account, contract_address, contract = get_w3_account_contract()
+    receipt = run_quiet(
+        remove_stake_if_price,
+        w3,
+        account,
+        contract_address,
+        hotkey,
+        netuid,
+        amount_alpha_rao,
+        ref_rao,
+        require_above,
+        contract=contract,
+    )
+    return {
+        "ok": True,
+        "receipt": receipt_to_dict(receipt),
+        "ref_price_rao_per_alpha_used": ref_rao,
+    }
+
+
+def do_remove_stake_limit_if_price(
+    hotkey: str,
+    netuid: int,
+    amount_alpha_rao: int,
+    rate_tolerance: float,
+    use_min_tolerance: bool,
+    allow_partial: bool,
+    amount_tao: float,
+    ref_price_tao_per_alpha: float,
+    require_above: bool,
+) -> dict:
+    subtensor = get_subtensor()
+    limit_price = int(
+        calculate_unstake_limit_price(
+            tao_amount=amount_tao,
+            netuid=netuid,
+            min_tolerance_unstaking=use_min_tolerance,
+            default_rate_tolerance=rate_tolerance,
+            subtensor=subtensor,
+        )
+    )
+    ref_rao = _ref_price_rao(ref_price_tao_per_alpha)
+    w3, account, contract_address, contract = get_w3_account_contract()
+    receipt = run_quiet(
+        remove_stake_limit_if_price,
+        w3,
+        account,
+        contract_address,
+        hotkey,
+        netuid,
+        limit_price,
+        amount_alpha_rao,
+        allow_partial,
+        ref_rao,
+        require_above,
+        contract=contract,
+    )
+    return {
+        "ok": True,
+        "receipt": receipt_to_dict(receipt),
+        "limit_price_used": limit_price,
+        "ref_price_rao_per_alpha_used": ref_rao,
+    }
 
 
 def do_remove_stake_limit(

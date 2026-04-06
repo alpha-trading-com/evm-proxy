@@ -6,15 +6,21 @@ from app.auth import get_current_username
 from app.schemas import (
     StakeBody,
     StakeLimitBody,
+    StakeIfPriceBody,
     RemoveStakeBody,
     RemoveStakeLimitBody,
+    RemoveStakeIfPriceBody,
     MoveStakeBody,
 )
 from app.services.stake_service import (
     do_stake,
     do_stake_limit,
+    do_stake_if_price,
+    do_stake_limit_if_price,
     do_remove_stake,
     do_remove_stake_limit,
+    do_remove_stake_if_price,
+    do_remove_stake_limit_if_price,
     do_move_stake,
     resolve_remove_stake_amount,
     resolve_remove_stake_limit_amounts,
@@ -49,6 +55,32 @@ async def api_stake_limit(body: StakeLimitBody, _: str = Depends(get_current_use
         return JSONResponse({"ok": False, "error": str(e)}, status_code=400)
 
 
+@router.post("/stake-if-price")
+async def api_stake_if_price(body: StakeIfPriceBody, _: str = Depends(get_current_username)):
+    try:
+        amount_rao = int(body.amount_tao * 10**9)
+        if body.not_limited:
+            return do_stake_if_price(
+                body.hotkey,
+                body.netuid,
+                amount_rao,
+                body.ref_price_tao_per_alpha,
+                body.require_above,
+            )
+        return do_stake_limit_if_price(
+            body.hotkey,
+            body.netuid,
+            amount_rao,
+            body.rate_tolerance,
+            body.use_min_tolerance,
+            body.allow_partial,
+            body.ref_price_tao_per_alpha,
+            body.require_above,
+        )
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=400)
+
+
 @router.post("/remove-stake")
 async def api_remove_stake(body: RemoveStakeBody, _: str = Depends(get_current_username)):
     try:
@@ -76,6 +108,40 @@ async def api_remove_stake_limit(
             body.use_min_tolerance,
             body.allow_partial,
             amount_tao,
+        )
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=400)
+
+
+@router.post("/remove-stake-if-price")
+async def api_remove_stake_if_price(
+    body: RemoveStakeIfPriceBody, _: str = Depends(get_current_username)
+):
+    try:
+        if body.not_limited:
+            amount_alpha_rao = resolve_remove_stake_amount(
+                body.hotkey, body.netuid, body.amount
+            )
+            return do_remove_stake_if_price(
+                body.hotkey,
+                body.netuid,
+                amount_alpha_rao,
+                body.ref_price_tao_per_alpha,
+                body.require_above,
+            )
+        amount_alpha_rao, amount_tao = resolve_remove_stake_limit_amounts(
+            body.hotkey, body.netuid, body.amount
+        )
+        return do_remove_stake_limit_if_price(
+            body.hotkey,
+            body.netuid,
+            amount_alpha_rao,
+            body.rate_tolerance,
+            body.use_min_tolerance,
+            body.allow_partial,
+            amount_tao,
+            body.ref_price_tao_per_alpha,
+            body.require_above,
         )
     except Exception as e:
         return JSONResponse({"ok": False, "error": str(e)}, status_code=400)
