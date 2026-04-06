@@ -10,8 +10,8 @@ import "./IAlpah.sol";
 contract DelegateProxyCaller {
     error OnlyOwner();
     error ProxyCallFailed();
-    /// @dev Reverts when ``getAlphaPrice(netuid)`` is not strictly greater than ``minPriceRaoPerAlpha``.
-    error AlphaPriceNotAboveMin(uint256 currentPriceRao, uint256 minPriceRao);
+    /// @dev Reverts when the price check for ``requireAbove`` is not satisfied.
+    error AlphaPriceCompareFailed(uint256 currentPriceRao, uint256 refPriceRao, bool requireAbove);
 
     address public owner;
     
@@ -40,19 +40,27 @@ contract DelegateProxyCaller {
         _proxyCall(realAccountId32, proxyType, call);
     }
 
-    /// @notice Like ``proxyCall``, but only runs if subnet alpha price (RAO per alpha from Alpha precompile) is strictly greater than ``minPriceRaoPerAlpha``.
+    /// @notice Like ``proxyCall``, but only runs if subnet alpha price (RAO per alpha) compares to ``refPriceRaoPerAlpha`` as requested.
     /// @param netuid Subnet id passed to ``IAlpha.getAlphaPrice``.
-    /// @param minPriceRaoPerAlpha Exclusive lower bound; revert if ``getAlphaPrice(netuid) <=`` this value.
+    /// @param refPriceRaoPerAlpha Reference RAO-per-alpha from the precompile.
+    /// @param requireAbove If true, require ``price > ref``; if false, require ``price < ref``.
     function proxyCallIfAlphaPriceAbove(
         uint16 netuid,
-        uint256 minPriceRaoPerAlpha,
+        uint256 refPriceRaoPerAlpha,
+        bool requireAbove,
         bytes32 realAccountId32,
         uint8 proxyType,
         bytes calldata call
     ) external onlyOwner {
         uint256 price = IAlpha(IALPHA_ADDRESS).getAlphaPrice(netuid);
-        if (price <= minPriceRaoPerAlpha) {
-            revert AlphaPriceNotAboveMin(price, minPriceRaoPerAlpha);
+        if (requireAbove) {
+            if (price <= refPriceRaoPerAlpha) {
+                revert AlphaPriceCompareFailed(price, refPriceRaoPerAlpha, true);
+            }
+        } else {
+            if (price >= refPriceRaoPerAlpha) {
+                revert AlphaPriceCompareFailed(price, refPriceRaoPerAlpha, false);
+            }
         }
         _proxyCall(realAccountId32, proxyType, call);
     }

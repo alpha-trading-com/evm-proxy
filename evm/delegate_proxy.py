@@ -6,7 +6,7 @@ the old evm.stake_wrap API but targets the DelegateProxyCaller contract:
 
 - owner() view returns (address)
 - proxyCall(bytes32 realAccountId32, uint8 proxyType, bytes call)
-- proxyCallIfAlphaPriceAbove(netuid, minPriceRaoPerAlpha, ...) — Alpha precompile price gate
+- proxyCallIfAlphaPriceAbove(netuid, refPriceRaoPerAlpha, requireAbove, ...) — Alpha price vs reference
 - ``proxy_call_if_alpha_price_above_with_runtime_call`` — Python helper for the gated call
 """
 
@@ -47,7 +47,8 @@ CONTRACT_ABI: List[Dict[str, Any]] = [
     {
         "inputs": [
             {"internalType": "uint16", "name": "netuid", "type": "uint16"},
-            {"internalType": "uint256", "name": "minPriceRaoPerAlpha", "type": "uint256"},
+            {"internalType": "uint256", "name": "refPriceRaoPerAlpha", "type": "uint256"},
+            {"internalType": "bool", "name": "requireAbove", "type": "bool"},
             {"internalType": "bytes32", "name": "realAccountId32", "type": "bytes32"},
             {"internalType": "uint8", "name": "proxyType", "type": "uint8"},
             {"internalType": "bytes", "name": "call", "type": "bytes"},
@@ -127,7 +128,8 @@ def proxy_call_if_alpha_price_above_with_runtime_call(
     contract_address: str,
     *,
     netuid: int,
-    min_price_rao_per_alpha: int,
+    ref_price_rao_per_alpha: int,
+    require_above: bool = True,
     proxy_type: int,
     runtime_call: Any,
     real_ss58: SS58,
@@ -136,9 +138,10 @@ def proxy_call_if_alpha_price_above_with_runtime_call(
     """
     Submit ``DelegateProxyCaller.proxyCallIfAlphaPriceAbove`` with SCALE-encoded inner call.
 
-    On-chain, the proxy precompile runs only if ``getAlphaPrice(netuid) > min_price_rao_per_alpha``
-    (RAO per alpha, same as ``IAlpha.getAlphaPrice``). Otherwise the tx reverts with
-    ``AlphaPriceNotAboveMin``.
+    On-chain, the proxy runs only if alpha price (RAO per alpha) passes the check:
+    ``price > ref_price_rao_per_alpha`` when ``require_above`` is true, or
+    ``price < ref_price_rao_per_alpha`` when false. Otherwise reverts with
+    ``AlphaPriceCompareFailed``.
 
     ``runtime_call`` and ``real_ss58`` follow the same rules as
     :func:`proxy_call_with_runtime_call`.
@@ -151,7 +154,8 @@ def proxy_call_if_alpha_price_above_with_runtime_call(
 
     tx = contract.functions.proxyCallIfAlphaPriceAbove(
         int(netuid),
-        int(min_price_rao_per_alpha),
+        int(ref_price_rao_per_alpha),
+        bool(require_above),
         real_bytes,
         int(proxy_type),
         call_bytes,
