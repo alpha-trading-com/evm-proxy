@@ -26,6 +26,7 @@ def resolve_stake_amount(amount_tao: float | None) -> int:
     coldkey_ss58 = settings.REAL_ACCOUNT_SS58
     free_balance = subtensor.get_balance(coldkey_ss58)
     if amount_tao is None:
+        print(free_balance, file=sys.stdout)
         return max(0, int(free_balance.rao) - 1)
     if 0 < amount_tao < 1:
         return int(amount_tao * free_balance.rao)

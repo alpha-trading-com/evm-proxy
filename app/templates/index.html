@@ -569,21 +569,32 @@
     }
 
     function postStakeOrLimit() {
+      const hotkey = document.getElementById('stake-hotkey').value.trim();
+      if (!hotkey) {
+        showResult('stake-result', false, 'Enter a hotkey');
+        return;
+      }
+      const netuid = parseInt(document.getElementById('stake-netuid').value, 10);
+      if (Number.isNaN(netuid)) {
+        showResult('stake-result', false, 'Enter a valid Netuid');
+        return;
+      }
       const parsed = parseOptionalTaoAmount('stake-amount', 'stake-result');
       if (!parsed.ok) return;
       const notLimited = document.getElementById('stake-not-limited').checked;
       if (notLimited) {
-        postJson('/api/stake', {
-          hotkey: document.getElementById('stake-hotkey').value.trim(),
-          netuid: parseInt(document.getElementById('stake-netuid').value, 10),
-          amount_tao: parsed.value,
-        }, 'stake-result');
+        postJson('/api/stake', { hotkey, netuid, amount_tao: parsed.value }, 'stake-result');
       } else {
+        const rateTol = parseFloat(document.getElementById('sl-tolerance').value);
+        if (!Number.isFinite(rateTol)) {
+          showResult('stake-result', false, 'Enter a valid rate tolerance');
+          return;
+        }
         postJson('/api/stake-limit', {
-          hotkey: document.getElementById('stake-hotkey').value.trim(),
-          netuid: parseInt(document.getElementById('stake-netuid').value, 10),
+          hotkey,
+          netuid,
           amount_tao: parsed.value,
-          rate_tolerance: parseFloat(document.getElementById('sl-tolerance').value),
+          rate_tolerance: rateTol,
           use_min_tolerance: document.getElementById('sl-use-min').checked,
           allow_partial: document.getElementById('sl-partial').checked,
         }, 'stake-result');
@@ -671,10 +682,12 @@
         showResult('sif-result', false, 'Enter a valid reference price (TAO per alpha)');
         return;
       }
+      const parsed = parseOptionalTaoAmount('sif-amount', 'sif-result');
+      if (!parsed.ok) return;
       postJson('/api/stake-if-price', {
         hotkey: document.getElementById('sif-hotkey').value.trim(),
         netuid: parseInt(document.getElementById('sif-netuid').value, 10),
-        amount_tao: parseFloat(document.getElementById('sif-amount').value),
+        amount_tao: parsed.value,
         ref_price_tao_per_alpha: ref,
         require_above: document.getElementById('sif-require-above').checked,
         not_limited: true,
