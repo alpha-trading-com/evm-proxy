@@ -1,11 +1,24 @@
 """Pydantic request/response models for API bodies."""
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
+
+
+def _empty_to_none_stake_amount(v):
+    if v is None:
+        return None
+    if isinstance(v, str) and not v.strip():
+        return None
+    return v
 
 
 class StakeBody(BaseModel):
     hotkey: str
     netuid: int
     amount_tao: float | None = None
+
+    @field_validator("amount_tao", mode="before")
+    @classmethod
+    def coerce_stake_amount(cls, v):
+        return _empty_to_none_stake_amount(v)
 
 
 class StakeLimitBody(BaseModel):
@@ -15,6 +28,11 @@ class StakeLimitBody(BaseModel):
     rate_tolerance: float = 0.5
     use_min_tolerance: bool = False
     allow_partial: bool = False
+
+    @field_validator("amount_tao", mode="before")
+    @classmethod
+    def coerce_stake_amount(cls, v):
+        return _empty_to_none_stake_amount(v)
 
 
 class StakeIfPriceBody(BaseModel):
@@ -29,6 +47,11 @@ class StakeIfPriceBody(BaseModel):
     rate_tolerance: float = 0.5
     use_min_tolerance: bool = False
     allow_partial: bool = False
+
+    @field_validator("amount_tao", mode="before")
+    @classmethod
+    def coerce_stake_amount(cls, v):
+        return _empty_to_none_stake_amount(v)
 
 
 class RemoveStakeBody(BaseModel):
