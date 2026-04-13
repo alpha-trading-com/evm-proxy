@@ -645,33 +645,58 @@
       return { ok: true, value: x };
     }
     function postRemoveStakeOrLimit() {
+      const hotkey = document.getElementById('rs-hotkey').value.trim();
+      if (!hotkey) {
+        showResult('rs-result', false, 'Enter a hotkey');
+        return;
+      }
+      const netuid = parseInt(document.getElementById('rs-netuid').value, 10);
+      if (Number.isNaN(netuid)) {
+        showResult('rs-result', false, 'Enter a valid Netuid');
+        return;
+      }
       const notLimited = document.getElementById('rs-not-limited').checked;
       const parsed = parseOptionalUnstakeAmount('rs-result');
       if (!parsed.ok) return;
       const amount = parsed.value;
       if (notLimited) {
         postJson('/api/remove-stake', {
-          hotkey: document.getElementById('rs-hotkey').value.trim(),
-          netuid: parseInt(document.getElementById('rs-netuid').value, 10),
+          hotkey: hotkey,
+          netuid: netuid,
           amount: amount,
         }, 'rs-result');
       } else {
+        const rateTol = parseFloat(document.getElementById('rsl-tolerance').value);
+        if (!Number.isFinite(rateTol)) {
+          showResult('rs-result', false, 'Enter a valid rate tolerance');
+          return;
+        }
         postJson('/api/remove-stake-limit', {
-          hotkey: document.getElementById('rs-hotkey').value.trim(),
-          netuid: parseInt(document.getElementById('rs-netuid').value, 10),
+          hotkey: hotkey,
+          netuid: netuid,
           amount: amount,
-          rate_tolerance: parseFloat(document.getElementById('rsl-tolerance').value),
+          rate_tolerance: rateTol,
           use_min_tolerance: document.getElementById('rsl-use-min').checked,
           allow_partial: document.getElementById('rsl-partial').checked,
         }, 'rs-result');
       }
     }
     function postRemoveStake() {
+      const hotkey = document.getElementById('rs-hotkey').value.trim();
+      if (!hotkey) {
+        showResult('rs-result', false, 'Enter a hotkey');
+        return;
+      }
+      const netuid = parseInt(document.getElementById('rs-netuid').value, 10);
+      if (Number.isNaN(netuid)) {
+        showResult('rs-result', false, 'Enter a valid Netuid');
+        return;
+      }
       const parsed = parseOptionalUnstakeAmount('rs-result');
       if (!parsed.ok) return;
       postJson('/api/remove-stake', {
-        hotkey: document.getElementById('rs-hotkey').value.trim(),
-        netuid: parseInt(document.getElementById('rs-netuid').value, 10),
+        hotkey: hotkey,
+        netuid: netuid,
         amount: parsed.value,
       }, 'rs-result');
     }
@@ -682,11 +707,21 @@
         showResult('sif-result', false, 'Enter a valid reference price (TAO per alpha)');
         return;
       }
+      const hotkey = document.getElementById('sif-hotkey').value.trim();
+      if (!hotkey) {
+        showResult('sif-result', false, 'Enter a hotkey');
+        return;
+      }
+      const netuid = parseInt(document.getElementById('sif-netuid').value, 10);
+      if (Number.isNaN(netuid)) {
+        showResult('sif-result', false, 'Enter a valid Netuid');
+        return;
+      }
       const parsed = parseOptionalTaoAmount('sif-amount', 'sif-result');
       if (!parsed.ok) return;
       postJson('/api/stake-if-price', {
-        hotkey: document.getElementById('sif-hotkey').value.trim(),
-        netuid: parseInt(document.getElementById('sif-netuid').value, 10),
+        hotkey: hotkey,
+        netuid: netuid,
         amount_tao: parsed.value,
         ref_price_tao_per_alpha: ref,
         require_above: document.getElementById('sif-require-above').checked,
@@ -711,11 +746,21 @@
         showResult('uif-result', false, 'Enter a valid reference price (TAO per alpha)');
         return;
       }
+      const hotkey = document.getElementById('uif-hotkey').value.trim();
+      if (!hotkey) {
+        showResult('uif-result', false, 'Enter a hotkey');
+        return;
+      }
+      const netuid = parseInt(document.getElementById('uif-netuid').value, 10);
+      if (Number.isNaN(netuid)) {
+        showResult('uif-result', false, 'Enter a valid Netuid');
+        return;
+      }
       const parsed = parseOptionalUifAmount();
       if (!parsed.ok) return;
       postJson('/api/remove-stake-if-price', {
-        hotkey: document.getElementById('uif-hotkey').value.trim(),
-        netuid: parseInt(document.getElementById('uif-netuid').value, 10),
+        hotkey: hotkey,
+        netuid: netuid,
         amount: parsed.value,
         ref_price_tao_per_alpha: ref,
         require_above: document.getElementById('uif-require-above').checked,
@@ -761,13 +806,26 @@
       }
     }
     function postMoveStake() {
-      const amountVal = document.getElementById('ms-amount').value.trim();
+      const originHotkey = document.getElementById('ms-origin-hotkey').value.trim();
+      const destHotkey = document.getElementById('ms-dest-hotkey').value.trim();
+      if (!originHotkey || !destHotkey) {
+        showResult('ms-result', false, 'Enter origin and destination hotkeys');
+        return;
+      }
+      const originNetuid = parseInt(document.getElementById('ms-origin').value, 10);
+      const destNetuid = parseInt(document.getElementById('ms-dest').value, 10);
+      if (Number.isNaN(originNetuid) || Number.isNaN(destNetuid)) {
+        showResult('ms-result', false, 'Enter valid origin and destination Netuids');
+        return;
+      }
+      const amountParsed = parseOptionalTaoAmount('ms-amount', 'ms-result');
+      if (!amountParsed.ok) return;
       postJson('/api/move-stake', {
-        origin_hotkey: document.getElementById('ms-origin-hotkey').value.trim(),
-        destination_hotkey: document.getElementById('ms-dest-hotkey').value.trim(),
-        origin_netuid: parseInt(document.getElementById('ms-origin').value, 10),
-        destination_netuid: parseInt(document.getElementById('ms-dest').value, 10),
-        amount_tao: amountVal === '' ? null : parseFloat(amountVal),
+        origin_hotkey: originHotkey,
+        destination_hotkey: destHotkey,
+        origin_netuid: originNetuid,
+        destination_netuid: destNetuid,
+        amount_tao: amountParsed.value,
       }, 'ms-result');
     }
     async function loadStakeInfo() {
