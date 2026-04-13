@@ -5,13 +5,13 @@ from pydantic import BaseModel
 class StakeBody(BaseModel):
     hotkey: str
     netuid: int
-    amount_tao: float
+    amount_tao: float | None = None
 
 
 class StakeLimitBody(BaseModel):
     hotkey: str
     netuid: int
-    amount_tao: float
+    amount_tao: float | None = None
     rate_tolerance: float = 0.5
     use_min_tolerance: bool = False
     allow_partial: bool = False
@@ -22,7 +22,7 @@ class StakeIfPriceBody(BaseModel):
 
     hotkey: str
     netuid: int
-    amount_tao: float
+    amount_tao: float | None = None
     ref_price_tao_per_alpha: float
     require_above: bool = True
     not_limited: bool = True

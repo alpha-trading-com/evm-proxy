@@ -133,13 +133,13 @@
 
       <section class="panel active" id="panel-stake">
         <h2>Stake</h2>
-        <small class="hint">Add stake (market) or stake limit order. Uncheck "Not limited" for limit order.</small>
+        <small class="hint">Add stake (market) or stake limit order. Uncheck "Not limited" for limit order. Leave TAO amount empty to stake all free balance (minus a small reserve).</small>
         <label style="margin-top: 0.5rem;">
           <input id="stake-not-limited" type="checkbox" checked /> Not limited (market order)
         </label>
         <label>Amount (TAO)</label>
         <div class="amount-input-row">
-          <input id="stake-amount" type="number" step="any" placeholder="e.g. 0.1" />
+          <input id="stake-amount" type="number" step="any" placeholder="e.g. 0.1 (empty = all)" />
           <div class="amount-presets-row">
             <button type="button" class="amount-preset-btn" onclick="setTaoAmount(300)">300</button>
             <button type="button" class="amount-preset-btn" onclick="setTaoAmount(250)">250</button>
@@ -222,7 +222,7 @@
         </label>
         <label>Amount (TAO)</label>
         <div class="amount-input-row">
-          <input id="sif-amount" type="number" step="any" placeholder="e.g. 0.1" />
+          <input id="sif-amount" type="number" step="any" placeholder="e.g. 0.1 (empty = all)" />
           <div class="amount-presets-row">
             <button type="button" class="amount-preset-btn" onclick="setSifTaoAmount(300)">300</button>
             <button type="button" class="amount-preset-btn" onclick="setSifTaoAmount(250)">250</button>
@@ -556,19 +556,33 @@
       }
     }
 
+    /** Empty field => null (stake all on server). Invalid text => show error. */
+    function parseOptionalTaoAmount(inputId, resultId) {
+      const raw = document.getElementById(inputId).value.trim();
+      if (raw === '') return { ok: true, value: null };
+      const x = parseFloat(raw);
+      if (!Number.isFinite(x)) {
+        showResult(resultId, false, 'Invalid amount');
+        return { ok: false };
+      }
+      return { ok: true, value: x };
+    }
+
     function postStakeOrLimit() {
+      const parsed = parseOptionalTaoAmount('stake-amount', 'stake-result');
+      if (!parsed.ok) return;
       const notLimited = document.getElementById('stake-not-limited').checked;
       if (notLimited) {
         postJson('/api/stake', {
           hotkey: document.getElementById('stake-hotkey').value.trim(),
           netuid: parseInt(document.getElementById('stake-netuid').value, 10),
-          amount_tao: parseFloat(document.getElementById('stake-amount').value),
+          amount_tao: parsed.value,
         }, 'stake-result');
       } else {
         postJson('/api/stake-limit', {
           hotkey: document.getElementById('stake-hotkey').value.trim(),
           netuid: parseInt(document.getElementById('stake-netuid').value, 10),
-          amount_tao: parseFloat(document.getElementById('stake-amount').value),
+          amount_tao: parsed.value,
           rate_tolerance: parseFloat(document.getElementById('sl-tolerance').value),
           use_min_tolerance: document.getElementById('sl-use-min').checked,
           allow_partial: document.getElementById('sl-partial').checked,
@@ -576,10 +590,15 @@
       }
     }
     async function calcMinToleranceStake() {
-      const amount = parseFloat(document.getElementById('stake-amount').value);
+      const raw = document.getElementById('stake-amount').value.trim();
+      if (raw === '') {
+        showResult('stake-result', false, 'Enter a TAO amount to calculate min tolerance (leave empty only when submitting stake all).');
+        return;
+      }
+      const amount = parseFloat(raw);
       const netuid = parseInt(document.getElementById('stake-netuid').value, 10);
-      if (!amount || !netuid) {
-        showResult('stake-result', false, 'Please enter TAO amount and Netuid');
+      if (!Number.isFinite(amount) || amount <= 0 || Number.isNaN(netuid)) {
+        showResult('stake-result', false, 'Please enter a valid TAO amount and Netuid');
         return;
       }
       showResult('stake-result', false, 'Calculating...');

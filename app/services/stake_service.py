@@ -20,6 +20,18 @@ from utils.tolerance import calculate_stake_limit_price, calculate_unstake_limit
 from app.core.config import settings
 
 
+def resolve_stake_amount(amount_tao: float | None) -> int:
+    """Convert stake amount (None = all free balance, 0<x<1 = fraction) to rao."""
+    subtensor = get_subtensor()
+    coldkey_ss58 = settings.REAL_ACCOUNT_SS58
+    free_balance = subtensor.get_balance(coldkey_ss58)
+    if amount_tao is None:
+        return max(0, int(free_balance.rao) - 1)
+    if 0 < amount_tao < 1:
+        return int(amount_tao * free_balance.rao)
+    return int(amount_tao * 10**9)
+
+
 def resolve_remove_stake_amount(
     hotkey: str, netuid: int, amount: float | None
 ) -> int:
