@@ -1,4 +1,5 @@
 """Stake/unstake amount resolution and EVM stake calls. Depends on subtensor for chain state."""
+import bittensor as bt
 import os
 import sys
 from web3 import Web3
@@ -18,6 +19,26 @@ from app.services.evm import (
 )
 from utils.tolerance import calculate_stake_limit_price, calculate_unstake_limit_price
 from app.core.config import settings
+
+
+def get_stake_custom(
+    subtensor: bt.Subtensor, coldkey_ss58: str, hotkey_ss58: str, netuid: int, block: int | None = None
+) -> bt.Balance:
+    """
+    Get the stake for a given hotkey/coldkey pair.
+
+    NOTE: This function was needed because of a breaking change in bittensor SDK that was released 2026-04-24
+    that broke the subtensor.get_stake function. When we migrate to bittensor to >= 10.2.0, this function can be
+    removed and we can revert to using the subtensor.get_stake function.
+    """
+    result = subtensor.query_runtime_api(
+        runtime_api="StakeInfoRuntimeApi",
+        method="get_stake_info_for_hotkey_coldkey_netuid",
+        params=[hotkey_ss58, coldkey_ss58, netuid],
+        block=block,
+    )
+    stake = bt.Balance.from_rao(result["stake"]).set_unit(netuid)
+    return stake
 
 
 def resolve_stake_amount(amount_tao: float | None) -> int:
@@ -42,10 +63,10 @@ def resolve_remove_stake_amount(
     subtensor = get_subtensor()
     print(amount, file=sys.stdout)
     if amount is None:
-        stake_balance = subtensor.get_stake(coldkey_ss58=coldkey_ss58, hotkey_ss58=hotkey, netuid=netuid)
+        stake_balance = get_stake_custom(subtensor=subtensor, coldkey_ss58=coldkey_ss58, hotkey_ss58=hotkey, netuid=netuid)
         return max(0, int(stake_balance.rao) - 1)
     if 0 < amount < 1:
-        stake_balance = subtensor.get_stake(coldkey_ss58=coldkey_ss58, hotkey_ss58=hotkey, netuid=netuid)
+        stake_balance = get_stake_custom(subtensor=subtensor, coldkey_ss58=coldkey_ss58, hotkey_ss58=hotkey, netuid=netuid)
         print(stake_balance, file=sys.stdout)
         return int(amount * stake_balance.rao)
     return int(amount * 10**9)
@@ -58,10 +79,10 @@ def resolve_remove_stake_limit_amounts(
     coldkey_ss58 = settings.REAL_ACCOUNT_SS58
     subtensor = get_subtensor()
     if amount is None:
-        stake_balance = subtensor.get_stake(coldkey_ss58=coldkey_ss58, hotkey_ss58=hotkey, netuid=netuid)
+        stake_balance = get_stake_custom(subtensor=subtensor, coldkey_ss58=coldkey_ss58, hotkey_ss58=hotkey, netuid=netuid)
         return stake_balance.rao - 1, stake_balance.tao
     if 0 < amount < 1:
-        stake_balance = subtensor.get_stake(coldkey_ss58=coldkey_ss58, hotkey_ss58=hotkey, netuid=netuid)
+        stake_balance = get_stake_custom(subtensor=subtensor, coldkey_ss58=coldkey_ss58, hotkey_ss58=hotkey, netuid=netuid)
         return int(amount * stake_balance.rao), amount * stake_balance.tao
     return int(amount * 10**9), amount / 10**9
 
@@ -73,12 +94,14 @@ def resolve_move_stake_amount(
     coldkey_ss58 = settings.REAL_ACCOUNT_SS58
     subtensor = get_subtensor()
     if amount_tao is None:
-        stake_balance = subtensor.get_stake(
+        stake_balance = get_stake_custom(
+            subtensor=subtensor,
             coldkey_ss58=coldkey_ss58, hotkey_ss58=origin_hotkey, netuid=origin_netuid
         )
         return max(0, int(stake_balance.rao) - 1)
     if 0 < amount_tao < 1:
-        stake_balance = subtensor.get_stake(
+        stake_balance = get_stake_custom(
+            subtensor=subtensor,
             coldkey_ss58=coldkey_ss58, hotkey_ss58=origin_hotkey, netuid=origin_netuid
         )
         return int(amount_tao * stake_balance.rao)
