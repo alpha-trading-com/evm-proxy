@@ -17,7 +17,10 @@ def get_stake_info_response() -> dict:
     stake_list = []
     total_staked_value = 0.0
     for info in stake_infos:
+
         subnet_info = subnet_infos[info.netuid]
+        if info.stake.rao < 2:
+            continue
         value = get_amount_with_sim_swap(subtensor, info.stake, info.netuid)
         total_staked_value += value
         stake_list.append({
