@@ -58,29 +58,6 @@ def add_stake_if_price(
     return do_stake_if_price(hotkey, netuid, amount_rao, ref_price_tao_per_alpha, require_above)
 
 
-def process_events(events: list[dict]) -> list[dict]:
-    """Run add_stake (or add_stake_if_price when configured) for whitelisted subnet events."""
-    results = []
-    for event in events:
-        event_type = event.get("event_type")
-        netuid = event.get("subnet")
-        if event_type not in STAKE_EVENT_TYPES:
-            continue
-        if netuid not in WHITELISTED_SUBNETS:
-            continue
-        try:
-            price_cfg = SUBNET_STAKE_IF_PRICE.get(netuid)
-            if price_cfg is not None:
-                ref_price, require_above = price_cfg
-                result = add_stake_if_price(netuid, ref_price, require_above)
-            else:
-                result = add_stake(netuid)
-            results.append({"event": event, "stake": result})
-        except Exception as exc:
-            print(f"stake failed for subnet {netuid}: {exc}")
-            results.append({"event": event, "stake": {"ok": False, "error": str(exc)}})
-    return results
-
 
 if __name__ == "__main__":
     add_stake_if_price(28, ref_price_tao_per_alpha=0.01, require_above=True, amount_tao=1)
