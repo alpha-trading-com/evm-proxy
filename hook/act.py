@@ -60,4 +60,4 @@ def add_stake_if_price(
 
 
 if __name__ == "__main__":
-    add_stake_if_price(28, ref_price_tao_per_alpha=0.01, require_above=False, amount_tao=1)
+    add_stake_if_price(28, ref_price_tao_per_alpha=0.01, require_above=True, amount_tao=1)
