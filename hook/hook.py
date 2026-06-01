@@ -39,11 +39,16 @@ def process_event(event: dict):
         add_stake_if_price(subnet, ref_price_tao_per_alpha=0.015, require_above=False, amount_tao=STAKE_AMOUNT_TAO)
 
 
+def instancs_global_variables():
+    add_stake(0, amount_tao=0.1)
+
 if __name__ == "__main__":
     subtensor = bt.Subtensor("finney")
     seen_order: deque = deque(maxlen=SEEN_MAX)
     seen_set: set = set()
     last_checked_block = 0
+    instancs_global_variables()
+    print("Starting hook...")
 
     while True:
         current_block = subtensor.get_current_block()
