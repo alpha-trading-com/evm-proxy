@@ -24,7 +24,7 @@ def process_event(event: dict):
     if subnet not in WHITELISTED_SUBNETS:
         return
     if event_type == EXTRINSIC_START_CALL or event_type == EXTRINSIC_SUBMIT_ENCRYPTED:
-        add_stake_if_price(subnet, ref_price_tao_per_alpha=0.015, require_above=False, amount_tao=200)
+        add_stake_if_price(subnet, ref_price_tao_per_alpha=0.015, require_above=False, amount_tao=1)
 
 
 if __name__ == "__main__":

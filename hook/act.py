@@ -14,16 +14,6 @@ load_dotenv(_REPO_ROOT / ".env")
 from app.core.config import settings
 from app.services.stake_service import do_stake, do_stake_if_price, resolve_stake_amount
 
-WHITELISTED_SUBNETS = [40, 58]
-STAKE_EVENT_TYPES = {"START_CALL", "SUBMIT_ENCRYPTED"}
-
-# netuid -> (ref_price_tao_per_alpha, require_above)
-SUBNET_STAKE_IF_PRICE: dict[int, tuple[float, bool]] = {
-    40: (0.01, True),
-    58: (0.01, True),
-}
-
-
 def add_stake(netuid: int, amount_tao: float | None = None, hotkey: str | None = None) -> dict:
     """Stake TAO on netuid via EVM proxy (add_stake). amount_tao=None stakes nearly all free balance."""
     hotkey = hotkey or settings.DEFAULT_DEST_HOTKEY
@@ -56,7 +46,6 @@ def add_stake_if_price(
         f"ref_price_tao_per_alpha={ref_price_tao_per_alpha} require_above={require_above}"
     )
     return do_stake_if_price(hotkey, netuid, amount_rao, ref_price_tao_per_alpha, require_above)
-
 
 
 if __name__ == "__main__":
