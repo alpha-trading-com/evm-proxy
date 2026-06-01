@@ -25,68 +25,6 @@ from hook_constants import ROOT_NETUID, UNSTAKE_TO_ROOT_IF_PRICE_ABOVE
 
 MIN_STAKE_RAO = 2
 
-
-def move_stake_to_root(
-    origin_netuid: int,
-    amount_tao: float | None = None,
-    hotkey: str | None = None,
-    destination_netuid: int = ROOT_NETUID,
-) -> dict:
-    """Move alpha from origin_netuid to root on the same hotkey."""
-    hotkey = hotkey or settings.DEFAULT_DEST_HOTKEY
-    amount_rao = resolve_move_stake_amount(hotkey, origin_netuid, amount_tao)
-    if amount_rao < MIN_STAKE_RAO:
-        return {
-            "ok": False,
-            "reason": "no_stake",
-            "origin_netuid": origin_netuid,
-            "amount_rao": amount_rao,
-        }
-    print(
-        f"move_stake_to_root origin_netuid={origin_netuid} "
-        f"destination_netuid={destination_netuid} hotkey={hotkey} amount_rao={amount_rao}"
-    )
-    return do_move_stake(hotkey, hotkey, origin_netuid, destination_netuid, amount_rao)
-
-
-def move_stake_to_root_if_price(
-    origin_netuid: int,
-    ref_price_tao_per_alpha: float,
-    require_above: bool = True,
-    amount_tao: float | None = None,
-    hotkey: str | None = None,
-    destination_netuid: int = ROOT_NETUID,
-) -> dict:
-    """
-    Move stake to root only if origin subnet alpha price passes the reference check.
-
-    require_above=True: move only when price > ref (take profit / exit when expensive).
-    """
-    hotkey = hotkey or settings.DEFAULT_DEST_HOTKEY
-    amount_rao = resolve_move_stake_amount(hotkey, origin_netuid, amount_tao)
-    if amount_rao < MIN_STAKE_RAO:
-        return {
-            "ok": False,
-            "reason": "no_stake",
-            "origin_netuid": origin_netuid,
-            "amount_rao": amount_rao,
-        }
-    print(
-        f"move_stake_to_root_if_price origin_netuid={origin_netuid} "
-        f"destination_netuid={destination_netuid} hotkey={hotkey} amount_rao={amount_rao} "
-        f"ref_price_tao_per_alpha={ref_price_tao_per_alpha} require_above={require_above}"
-    )
-    return do_move_stake_if_price(
-        hotkey,
-        hotkey,
-        origin_netuid,
-        destination_netuid,
-        amount_rao,
-        ref_price_tao_per_alpha,
-        require_above,
-    )
-
-
 def check_unstake_to_root_if_price() -> list[dict]:
     """For each configured subnet, move all stake to root if price is above threshold."""
     subtensor = get_subtensor()
@@ -117,4 +55,6 @@ def check_unstake_to_root_if_price() -> list[dict]:
 
 
 if __name__ == "__main__":
-    check_unstake_to_root_if_price()
+    move_stake_to_root_if_price(origin_netuid=4, ref_price_tao_per_alpha=0.05, require_above=True, amount_tao=None)
+    #move_stake_to_root_if_price(netuid=40, ref_price_tao_per_alpha=0.02, require_above=True, amount_tao=100000000)
+    #check_unstake_to_root_if_price()
