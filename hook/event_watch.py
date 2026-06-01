@@ -13,9 +13,8 @@ if str(_REPO_ROOT) not in sys.path:
 if str(_HOOK_DIR) not in sys.path:
     sys.path.insert(0, str(_HOOK_DIR))
 
-from act import process_events
+from hook_constants import SEEN_MAX
 
-_SEEN_MAX = 1500
 
 def _remember_hash(extrinsic_hash, seen_order: deque, seen_set: set) -> bool:
     """Return True if already seen. Otherwise record hash and return False."""
@@ -82,7 +81,7 @@ def get_owner_coldkeys(subtensor: bt.Subtensor) -> list:
 
 if __name__ == "__main__":
     subtensor = bt.Subtensor("finney")
-    seen_order: deque = deque(maxlen=_SEEN_MAX)
+    seen_order: deque = deque(maxlen=SEEN_MAX)
     seen_set: set = set()
     last_checked_block = 0
 
@@ -95,7 +94,4 @@ if __name__ == "__main__":
         events = fetch_extrinsic_data(subtensor, owner_coldkeys, seen_order, seen_set)
         if events:
             print(events)
-            results = process_events(events)
-            if results:
-                print(results)
         time.sleep(1)
