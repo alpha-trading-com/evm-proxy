@@ -26,5 +26,5 @@ def add_stake(netuid: int, amount_tao: float | None = None, hotkey: str | None =
 
 
 if __name__ == "__main__":
-    add_stake(40, 1)
+    add_stake(28, 1)
 
