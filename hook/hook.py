@@ -15,7 +15,7 @@ if str(_HOOK_DIR) not in sys.path:
 
 from event_watch import fetch_extrinsic_data, get_owner_coldkeys
 from act import add_stake
-from hook_constants import SEEN_MAX
+from hook_constants import SEEN_MAX, EXTRINSIC_START_CALL, EXTRINSIC_SUBMIT_ENCRYPTED, WHITELISTED_SUBNETS
 
 
 
@@ -34,7 +34,10 @@ if __name__ == "__main__":
         events = fetch_extrinsic_data(subtensor, owner_coldkeys, seen_order, seen_set)
         if events:
             print(events)
-            results = process_events(events)
-            if results:
-                print(results)
+            for event in events:
+                event_type = event.get('event_type')
+                if event_type == EXTRINSIC_START_CALL:
+                    add_stake(event.get('subnet'))
+                elif event_type == EXTRINSIC_SUBMIT_ENCRYPTED:
+                    add_stake(event.get('subnet'))
         time.sleep(1)

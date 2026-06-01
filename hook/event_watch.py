@@ -13,7 +13,7 @@ if str(_REPO_ROOT) not in sys.path:
 if str(_HOOK_DIR) not in sys.path:
     sys.path.insert(0, str(_HOOK_DIR))
 
-from hook_constants import SEEN_MAX
+from hook_constants import SEEN_MAX, EXTRINSIC_START_CALL, EXTRINSIC_SUBMIT_ENCRYPTED, WHITELISTED_SUBNETS
 
 
 def _remember_hash(extrinsic_hash, seen_order: deque, seen_set: set) -> bool:
@@ -59,14 +59,14 @@ def fetch_extrinsic_data(
             call_function == 'start_call'
         ):
             events.append({
-                'event_type': 'START_CALL',
+                'event_type': EXTRINSIC_START_CALL,
                 'subnet': subnet_id,
                 'address': address,
             })
 
         if call_module == 'MevShield' and call_function == 'submit_encrypted':
             events.append({
-                'event_type': 'SUBMIT_ENCRYPTED',
+                'event_type': EXTRINSIC_SUBMIT_ENCRYPTED,
                 'subnet': subnet_id,
                 'address': address,
             })
