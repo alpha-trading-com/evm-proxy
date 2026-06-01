@@ -33,7 +33,6 @@ if __name__ == "__main__":
     seen_set: set = set()
     last_checked_block = 0
 
-
     while True:
         current_block = subtensor.get_current_block()
         if current_block > last_checked_block:
