@@ -14,9 +14,17 @@ if str(_HOOK_DIR) not in sys.path:
     sys.path.insert(0, str(_HOOK_DIR))
 
 from event_watch import fetch_extrinsic_data, get_owner_coldkeys
-from act import add_stake
+from act import add_stake, add_stake_if_price
 from hook_constants import SEEN_MAX, EXTRINSIC_START_CALL, EXTRINSIC_SUBMIT_ENCRYPTED, WHITELISTED_SUBNETS
 
+
+def process_event(event: dict):
+    event_type = event.get('event_type')
+    subnet = event.get('subnet')
+    if subnet not in WHITELISTED_SUBNETS:
+        return
+    if event_type == EXTRINSIC_START_CALL or event_type == EXTRINSIC_SUBMIT_ENCRYPTED:
+        add_stake_if_price(subnet, ref_price_tao_per_alpha=0.015, require_above=False, amount_tao=200)
 
 
 if __name__ == "__main__":
@@ -34,10 +42,4 @@ if __name__ == "__main__":
         events = fetch_extrinsic_data(subtensor, owner_coldkeys, seen_order, seen_set)
         if events:
             for event in events:
-                event_type = event.get('event_type')
-                subnet = event.get('subnet')
-                if subnet not in WHITELISTED_SUBNETS:
-                    continue
-                
-                
-        time.sleep(1)
+                process_event(event)
