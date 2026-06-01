@@ -33,11 +33,11 @@ if __name__ == "__main__":
             last_checked_block = current_block
         events = fetch_extrinsic_data(subtensor, owner_coldkeys, seen_order, seen_set)
         if events:
-            print(events)
             for event in events:
                 event_type = event.get('event_type')
-                if event_type == EXTRINSIC_START_CALL:
-                    add_stake(event.get('subnet'))
-                elif event_type == EXTRINSIC_SUBMIT_ENCRYPTED:
-                    add_stake(event.get('subnet'))
+                subnet = event.get('subnet')
+                if subnet not in WHITELISTED_SUBNETS:
+                    continue
+                
+                
         time.sleep(1)
