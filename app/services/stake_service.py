@@ -8,6 +8,7 @@ from app.globals import get_coldkey_ss58, get_subtensor
 from app.services.evm_service import get_w3_account_contract, receipt_to_dict, run_quiet
 from app.services.evm import (
     move_stake,
+    move_stake_if_price,
     remove_stake,
     remove_stake_if_price,
     remove_stake_limit,
@@ -324,3 +325,35 @@ def do_move_stake(
         contract=contract,
     )
     return {"ok": True, "receipt": receipt_to_dict(receipt)}
+
+
+def do_move_stake_if_price(
+    origin_hotkey: str,
+    destination_hotkey: str,
+    origin_netuid: int,
+    destination_netuid: int,
+    amount_rao: int,
+    ref_price_tao_per_alpha: float,
+    require_above: bool,
+) -> dict:
+    ref_rao = _ref_price_rao(ref_price_tao_per_alpha)
+    w3, account, contract_address, contract = get_w3_account_contract()
+    receipt = run_quiet(
+        move_stake_if_price,
+        w3,
+        account,
+        contract_address,
+        origin_hotkey,
+        destination_hotkey,
+        origin_netuid,
+        destination_netuid,
+        amount_rao,
+        ref_rao,
+        require_above,
+        contract=contract,
+    )
+    return {
+        "ok": True,
+        "receipt": receipt_to_dict(receipt),
+        "ref_price_rao_per_alpha_used": ref_rao,
+    }

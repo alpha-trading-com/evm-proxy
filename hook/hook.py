@@ -15,6 +15,7 @@ if str(_HOOK_DIR) not in sys.path:
 
 from event_watch import fetch_extrinsic_data, get_owner_coldkeys
 from act import add_stake, add_stake_if_price
+from unstake import check_unstake_to_root_if_price
 from hook_constants import (
     SEEN_MAX, 
     EXTRINSIC_START_CALL, 
@@ -55,7 +56,11 @@ if __name__ == "__main__":
         if current_block > last_checked_block:
             owner_coldkeys = get_owner_coldkeys(subtensor)
             last_checked_block = current_block
+            unstake_results = check_unstake_to_root_if_price()
+            if unstake_results:
+                print(unstake_results)
         events = fetch_extrinsic_data(subtensor, owner_coldkeys, seen_order, seen_set)
         if events:
             for event in events:
                 process_event(event)
+        time.sleep(1)

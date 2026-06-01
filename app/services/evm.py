@@ -296,3 +296,40 @@ def move_stake(
         contract=contract,
     )
     return receipt
+
+
+def move_stake_if_price(
+    w3: Web3,
+    account: Account,
+    contract_address: str,
+    origin_hotkey: str,
+    destination_hotkey: str,
+    origin_netuid: int,
+    destination_netuid: int,
+    amount_rao: int,
+    ref_price_rao_per_alpha: int,
+    require_above: bool,
+    contract=None,
+) -> dict:
+    subtensor = get_subtensor()
+    call = move_stake_extrinsic(
+        subtensor,
+        origin_hotkey,
+        destination_hotkey,
+        origin_netuid,
+        destination_netuid,
+        amount_rao,
+    )
+    inner = runtime_call_bytes(call)
+    return proxy_call_if_alpha_price_above_with_runtime_call(
+        w3,
+        account,
+        contract_address,
+        netuid=origin_netuid,
+        ref_price_rao_per_alpha=ref_price_rao_per_alpha,
+        require_above=require_above,
+        proxy_type=0,
+        runtime_call=inner,
+        real_ss58=settings.DELEGATOR_SS58,
+        contract=contract,
+    )
