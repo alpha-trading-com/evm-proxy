@@ -41,9 +41,6 @@ def process_event(event: dict):
         add_stake_if_price(subnet, ref_price_tao_per_alpha=0.015, require_above=False, amount_tao=STAKE_AMOUNT_TAO)
 
 
-def instancs_global_variables():
-    # This function is no longer needed as globals are pre-initialized
-    pass
 
 if __name__ == "__main__":
     init_globals()  # Pre-initialize globals to avoid first-call delay
