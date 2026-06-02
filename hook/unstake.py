@@ -35,6 +35,8 @@ if __name__ == "__main__":
     # subtensor = bt.Subtensor("finney")
     # last_checked_block = 0
 
+    subtensor.wait_for_block()
+
     while True:
         current_block = subtensor.get_current_block()
         subnet_infos = subtensor.all_subnets()
