@@ -1,3 +1,6 @@
+from app.constants import NETWORK
+
+
 SEEN_MAX = 1500
 EXTRINSIC_START_CALL = 'START_CALL'
 EXTRINSIC_SUBMIT_ENCRYPTED = 'SUBMIT_ENCRYPTED'
@@ -5,10 +8,10 @@ WHITELISTED_SUBNETS = [40, 58]
 BLACK_LISTED_COLDKEYS = ["5F9Qvcz22Fwq4cm58o2bShiL6n8BnJmhqXB1cispBpqRfN6w"]
 STAKE_AMOUNT_TAO = 1
 ROOT_NETUID = 0
-MIN_STAKE_RAO = 2
-
+MIN_STAKE_RAO = 1000_000_001
+NETWORK = "ws://127.0.0.1:9944"
 # netuid -> TAO per alpha; move all stake to root when price is above this
 UNSTAKE_TO_ROOT_IF_PRICE_ABOVE: dict[int, float] = {
-    40: 0.02,
+    4: 0.02,
 #    58: 0.02,
 }

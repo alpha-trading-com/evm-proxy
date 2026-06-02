@@ -29,19 +29,12 @@ from act import move_stake_to_root_if_price, move_stake_to_root
 
 if __name__ == "__main__":
     subtensor = bt.Subtensor("finney")
-    #move_stake_to_root_if_price(origin_netuid=4, ref_price_tao_per_alpha=0.05, require_above=True, amount_tao=None)
-    #move_stake_to_root_if_price(netuid=40, ref_price_tao_per_alpha=0.02, require_above=True, amount_tao=100000000)
-    #check_unstake_to_root_if_price()
-    # subtensor = bt.Subtensor("finney")
-    # last_checked_block = 0
-
-    subtensor.wait_for_block()
 
     while True:
-        current_block = subtensor.get_current_block()
         subnet_infos = subtensor.all_subnets()
         coldkey_ss58 = settings.REAL_ACCOUNT_SS58
         hotkey = settings.DEFAULT_DEST_HOTKEY
+        all_subnets = subtensor.all_subnets()
 
         for netuid, ref_price in UNSTAKE_TO_ROOT_IF_PRICE_ABOVE.items():
             stake_balance = get_stake_custom(subtensor, coldkey_ss58, hotkey, netuid)
@@ -49,7 +42,7 @@ if __name__ == "__main__":
                 print(f"stake_balance is below MIN_STAKE_RAO for subnet {netuid}")
                 continue
 
-            subnet_price = float(subtensor.all_subnets()[netuid].price.tao)
+            subnet_price = float(all_subnets[netuid].price.tao)
             
             if subnet_price >= ref_price:
                 print(f"subnet_price is above ref_price for subnet {netuid}")
