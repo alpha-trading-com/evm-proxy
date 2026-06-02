@@ -17,6 +17,7 @@ if __name__ == "__main__":
             stake_balance = get_stake_custom(subtensor, settings.REAL_ACCOUNT_SS58, settings.DEFAULT_DEST_HOTKEY, netuid)
             if stake_balance.rao < MIN_STAKE_RAO:
                 print(f"stake_balance is below MIN_STAKE_RAO for subnet {netuid}")
+                subtensor.wait_for_block()
                 continue
             
             move_stake_to_root_if_price(origin_netuid=netuid, ref_price_tao_per_alpha=ref_price, require_above=True, amount_tao=float(stake_balance.tao - 1))
