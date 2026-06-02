@@ -56,6 +56,3 @@ if __name__ == "__main__":
                 move_stake_to_root(origin_netuid=netuid, amount_tao=float(stake_balance.tao - 1))
                 continue
 
-        # time.sleep(9)
-        # move_stake_to_root_if_price(origin_netuid=netuid, ref_price_tao_per_alpha=ref_price, require_above=True, amount_tao=float(stake_balance.tao - 1))
-
