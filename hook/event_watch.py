@@ -37,6 +37,7 @@ def fetch_extrinsic_data(
     events = []
 
     extrinsics = subtensor.substrate.retrieve_pending_extrinsics()
+    print(f"Fetched {len(extrinsics)} events from mempool")
 
     for ex in extrinsics:
         call = ex.value.get('call', {})

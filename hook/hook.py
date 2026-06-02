@@ -21,7 +21,8 @@ from hook_constants import (
     EXTRINSIC_SUBMIT_ENCRYPTED, 
     WHITELISTED_SUBNETS, 
     STAKE_AMOUNT_TAO, 
-    BLACK_LISTED_COLDKEYS)
+    BLACK_LISTED_COLDKEYS,
+    NETWORK)
 from app.globals import init_globals
 
 
@@ -43,7 +44,7 @@ def process_event(event: dict):
 
 if __name__ == "__main__":
     init_globals()  # Pre-initialize globals to avoid first-call delay
-    subtensor = bt.Subtensor("finney")
+    subtensor = bt.Subtensor(NETWORK)
     seen_order: deque = deque(maxlen=SEEN_MAX)
     seen_set: set = set()
     last_checked_block = 0
