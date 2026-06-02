@@ -24,10 +24,12 @@ from app.services.stake_service import (
 )
 from hook_constants import ROOT_NETUID, UNSTAKE_TO_ROOT_IF_PRICE_ABOVE, MIN_STAKE_RAO
 from act import move_stake_to_root_if_price, move_stake_to_root
+from app.globals import init_globals
 
 
 
 if __name__ == "__main__":
+    init_globals()  # Pre-initialize globals to avoid first-call delay
     subtensor = bt.Subtensor("finney")
 
     while True:

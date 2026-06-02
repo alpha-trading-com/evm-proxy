@@ -21,11 +21,13 @@ from hook_constants import UNSTAKE_TO_ROOT_IF_PRICE_ABOVE, MIN_STAKE_RAO
 from act import move_stake_to_root, move_stake_to_root_if_price
 from app.core.config import settings
 from app.services.stake_service import get_stake_custom
+from app.globals import init_globals
 
 
 
 if __name__ == "__main__":
     subtensor = bt.Subtensor("finney")
+    init_globals()  # Pre-initialize globals to avoid first-call delay
 
     while True:
         staked = False

@@ -23,6 +23,7 @@ from hook_constants import (
     WHITELISTED_SUBNETS, 
     STAKE_AMOUNT_TAO, 
     BLACK_LISTED_COLDKEYS)
+from app.globals import init_globals
 
 
 def process_event(event: dict):
@@ -41,14 +42,15 @@ def process_event(event: dict):
 
 
 def instancs_global_variables():
-    add_stake(0, amount_tao=0.1)
+    # This function is no longer needed as globals are pre-initialized
+    pass
 
 if __name__ == "__main__":
+    init_globals()  # Pre-initialize globals to avoid first-call delay
     subtensor = bt.Subtensor("finney")
     seen_order: deque = deque(maxlen=SEEN_MAX)
     seen_set: set = set()
     last_checked_block = 0
-    instancs_global_variables()
     print("Starting hook...")
 
     while True:

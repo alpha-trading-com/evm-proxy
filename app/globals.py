@@ -110,3 +110,9 @@ def clear_globals() -> None:
     _subtensor_instance = None
     _coldkey_ss58 = None
     clear_w3_cache()
+
+def init_globals() -> None:
+    """Pre-initialize shared globals once at startup to avoid first-call delay."""
+    get_subtensor()
+    get_coldkey_ss58()
+    get_w3_account_contract()
