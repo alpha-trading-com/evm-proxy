@@ -12,13 +12,9 @@ if __name__ == "__main__":
     subtensor.wait_for_block()
 
     while True:
-        current_block = subtensor.get_current_block()
-        subnet_infos = subtensor.all_subnets()
-        coldkey_ss58 = settings.REAL_ACCOUNT_SS58
-        hotkey = settings.DEFAULT_DEST_HOTKEY
-
+        time.sleep(8)
         for netuid, ref_price in UNSTAKE_TO_ROOT_IF_PRICE_ABOVE.items():
-            stake_balance = get_stake_custom(subtensor, coldkey_ss58, hotkey, netuid)
+            stake_balance = get_stake_custom(subtensor, settings.REAL_ACCOUNT_SS58, settings.DEFAULT_DEST_HOTKEY, netuid)
             if stake_balance.rao < MIN_STAKE_RAO:
                 print(f"stake_balance is below MIN_STAKE_RAO for subnet {netuid}")
                 continue
