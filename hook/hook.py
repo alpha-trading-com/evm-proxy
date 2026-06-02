@@ -15,7 +15,6 @@ if str(_HOOK_DIR) not in sys.path:
 
 from event_watch import fetch_extrinsic_data, get_owner_coldkeys
 from act import add_stake, add_stake_if_price
-from unstake import check_unstake_to_root_if_price
 from hook_constants import (
     SEEN_MAX, 
     EXTRINSIC_START_CALL, 

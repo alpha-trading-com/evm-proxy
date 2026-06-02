@@ -20,9 +20,9 @@ BLACK_LISTED_COLDKEYS = [
 ]
 
 UNSTAKE_TO_ROOT_IF_PRICE_ABOVE: dict[int, float] = {
-    16: 0.02,
-    40: 0.02,
-    58: 0.02,
-    92: 0.02,
-    72: 0.02,
+    16: 0.025,
+    40: 0.025,
+    58: 0.025,
+    92: 0.025,
+    72: 0.025,
 }
