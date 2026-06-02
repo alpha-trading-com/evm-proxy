@@ -1,7 +1,8 @@
 """Move stake to root (netuid 0) when subnet alpha price is above a threshold."""
 import sys
 from pathlib import Path
-
+import bittensor as bt
+import time
 _REPO_ROOT = Path(__file__).resolve().parent.parent
 _HOOK_DIR = Path(__file__).resolve().parent
 if str(_REPO_ROOT) not in sys.path:
@@ -21,40 +22,39 @@ from app.services.stake_service import (
     get_stake_custom,
     resolve_move_stake_amount,
 )
-from hook_constants import ROOT_NETUID, UNSTAKE_TO_ROOT_IF_PRICE_ABOVE
+from hook_constants import ROOT_NETUID, UNSTAKE_TO_ROOT_IF_PRICE_ABOVE, MIN_STAKE_RAO
+from act import move_stake_to_root_if_price, move_stake_to_root
 
-MIN_STAKE_RAO = 2
-
-def check_unstake_to_root_if_price() -> list[dict]:
-    """For each configured subnet, move all stake to root if price is above threshold."""
-    subtensor = get_subtensor()
-    coldkey_ss58 = settings.REAL_ACCOUNT_SS58
-    hotkey = settings.DEFAULT_DEST_HOTKEY
-    results = []
-
-    for netuid, ref_price in UNSTAKE_TO_ROOT_IF_PRICE_ABOVE.items():
-        if netuid == ROOT_NETUID:
-            continue
-        stake_balance = get_stake_custom(subtensor, coldkey_ss58, hotkey, netuid)
-        if stake_balance.rao < MIN_STAKE_RAO:
-            continue
-        subnet_price = subtensor.all_subnets()[netuid].price.tao
-        if subnet_price <= ref_price:
-            continue
-        try:
-            result = move_stake_to_root_if_price(
-                netuid,
-                ref_price_tao_per_alpha=ref_price,
-                require_above=True,
-            )
-            results.append({"netuid": netuid, "subnet_price_tao": subnet_price, "move": result})
-        except Exception as exc:
-            print(f"move_stake_to_root failed for subnet {netuid}: {exc}")
-            results.append({"netuid": netuid, "move": {"ok": False, "error": str(exc)}})
-    return results
 
 
 if __name__ == "__main__":
-    move_stake_to_root_if_price(origin_netuid=4, ref_price_tao_per_alpha=0.05, require_above=True, amount_tao=None)
+    subtensor = bt.Subtensor("finney")
+    #move_stake_to_root_if_price(origin_netuid=4, ref_price_tao_per_alpha=0.05, require_above=True, amount_tao=None)
     #move_stake_to_root_if_price(netuid=40, ref_price_tao_per_alpha=0.02, require_above=True, amount_tao=100000000)
     #check_unstake_to_root_if_price()
+    # subtensor = bt.Subtensor("finney")
+    # last_checked_block = 0
+
+    while True:
+        current_block = subtensor.get_current_block()
+        subnet_infos = subtensor.all_subnets()
+        subtensor = get_subtensor()
+        coldkey_ss58 = settings.REAL_ACCOUNT_SS58
+        hotkey = settings.DEFAULT_DEST_HOTKEY
+
+        for netuid, ref_price in UNSTAKE_TO_ROOT_IF_PRICE_ABOVE.items():
+            stake_balance = get_stake_custom(subtensor, coldkey_ss58, hotkey, netuid)
+            if stake_balance.rao < MIN_STAKE_RAO:
+                print(f"stake_balance is below MIN_STAKE_RAO for subnet {netuid}")
+                continue
+
+            subnet_price = float(subtensor.all_subnets()[netuid].price.tao)
+            
+            if subnet_price >= ref_price:
+                print(f"subnet_price is above ref_price for subnet {netuid}")
+                move_stake_to_root(origin_netuid=netuid, amount_tao=float(stake_balance.tao - 1))
+                continue
+
+        time.sleep(9)
+        move_stake_to_root_if_price(origin_netuid=netuid, ref_price_tao_per_alpha=ref_price, require_above=True, amount_tao=float(stake_balance.tao - 1))
+

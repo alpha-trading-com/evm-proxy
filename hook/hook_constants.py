@@ -10,5 +10,5 @@ MIN_STAKE_RAO = 2
 # netuid -> TAO per alpha; move all stake to root when price is above this
 UNSTAKE_TO_ROOT_IF_PRICE_ABOVE: dict[int, float] = {
     40: 0.02,
-    58: 0.02,
+#    58: 0.02,
 }
