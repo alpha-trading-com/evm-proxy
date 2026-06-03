@@ -49,11 +49,10 @@ if __name__ == "__main__":
 
     print(f"staked_netuid: {staked_netuid}")
     ref_price = UNSTAKE_TO_ROOT_IF_PRICE_ABOVE[staked_netuid]
+    coldkey_ss58 = settings.REAL_ACCOUNT_SS58
+    hotkey = settings.DEFAULT_DEST_HOTKEY
 
     while True:
-        subnet_infos = subtensor.all_subnets()
-        coldkey_ss58 = settings.REAL_ACCOUNT_SS58
-        hotkey = settings.DEFAULT_DEST_HOTKEY
         all_subnets = subtensor.all_subnets()
 
         stake_balance = get_stake_custom(subtensor, coldkey_ss58, hotkey, staked_netuid)
