@@ -44,7 +44,7 @@ if __name__ == "__main__":
                 break
         if staked:
             break
-        print("not staked")
+        print("not staked for unstake.py")
         subtensor.wait_for_block()
 
     print(f"staked_netuid: {staked_netuid}")
