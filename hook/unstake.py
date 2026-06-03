@@ -32,22 +32,39 @@ if __name__ == "__main__":
     init_globals()  # Pre-initialize globals to avoid first-call delay
     subtensor = bt.Subtensor(NETWORK)
 
+    staked_netuid = None
+
+    while True:
+        staked = False
+        for netuid, ref_price in UNSTAKE_TO_ROOT_IF_PRICE_ABOVE.items():
+            stake_balance = get_stake_custom(subtensor, settings.REAL_ACCOUNT_SS58, settings.DEFAULT_DEST_HOTKEY, netuid)
+            if stake_balance.rao >= MIN_STAKE_RAO:
+                staked = True
+                staked_netuid = netuid
+                break
+        if staked:
+            break
+        print("not staked")
+        subtensor.wait_for_block()
+
+    print(f"staked_netuid: {staked_netuid}")
+    ref_price = UNSTAKE_TO_ROOT_IF_PRICE_ABOVE[staked_netuid]
+
     while True:
         subnet_infos = subtensor.all_subnets()
         coldkey_ss58 = settings.REAL_ACCOUNT_SS58
         hotkey = settings.DEFAULT_DEST_HOTKEY
         all_subnets = subtensor.all_subnets()
 
-        for netuid, ref_price in UNSTAKE_TO_ROOT_IF_PRICE_ABOVE.items():
-            stake_balance = get_stake_custom(subtensor, coldkey_ss58, hotkey, netuid)
-            if stake_balance.rao < MIN_STAKE_RAO:
-                print(f"stake_balance is below MIN_STAKE_RAO for subnet {netuid}")
-                continue
+        stake_balance = get_stake_custom(subtensor, coldkey_ss58, hotkey, staked_netuid)
+        if stake_balance.rao < MIN_STAKE_RAO:
+            print(f"stake_balance is below MIN_STAKE_RAO for subnet {staked_netuid}")
+            continue
 
-            subnet_price = float(all_subnets[netuid].price.tao)
-            
-            if subnet_price >= ref_price:
-                print(f"subnet_price is above ref_price for subnet {netuid}")
-                move_stake_to_root(origin_netuid=netuid, amount_tao=float(stake_balance.tao - 1))
-                continue
+        subnet_price = float(all_subnets[staked_netuid].price.tao)
+        
+        if subnet_price >= ref_price:
+            print(f"subnet_price is above ref_price for subnet {netuid}")
+            move_stake_to_root(origin_netuid=staked_netuid, amount_tao=float(stake_balance.tao - 1))
+            continue
 
