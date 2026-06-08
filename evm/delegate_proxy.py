@@ -107,7 +107,7 @@ def proxy_call_with_runtime_call(
     ).build_transaction(
         {
             "from": account.address,
-            "nonce": w3.eth.get_transaction_count(account.address),
+            "nonce": w3.eth.get_transaction_count(account.address, block_identifier="pending"),
             "gas": int(2000000),
             "gasPrice": w3.eth.gas_price,
         }
@@ -158,7 +158,7 @@ def proxy_call_if_alpha_price_above_with_runtime_call(
     ).build_transaction(
         {
             "from": account.address,
-            "nonce": w3.eth.get_transaction_count(account.address),
+            "nonce": w3.eth.get_transaction_count(account.address, block_identifier="pending"),
             "gas": int(2_000_000),
             "gasPrice": w3.eth.gas_price,
         }

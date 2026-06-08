@@ -49,7 +49,7 @@ def deploy_contract(w3, account, contract_abi, contract_bytecode):
     # Build transaction - no constructor parameters needed
     construct_txn = contract.constructor().build_transaction({
         'from': account.address,
-        'nonce': w3.eth.get_transaction_count(account.address),
+        'nonce': w3.eth.get_transaction_count(account.address, block_identifier="pending"),
         'gas': 2000000,  # Adjust based on your needs
         'gasPrice': w3.eth.gas_price,
     })
