@@ -65,7 +65,7 @@ def main() -> None:
         # -------------------------------------------------------------------------
         # add_stake_limit inputs (example — replace with your values)
         # ---------------------------------------------------------------------------
-        HOTKEY_SS58 = "5Gq2gs4ft5dhhjbHabvVbAhjMCV2RgKmVJKAFCUWiirbRT21"
+        HOTKEY_SS58 = "5E2LP6EnZ54m3wS8s1yPvD5c3xo71kQroBw7aUVK32TKeZ5u"
         NETUID = 64
         AMOUNT_TAO = 0.1  # stake size; or set AMOUNT_RAO and AMOUNT_TAO = None
         AMOUNT_RAO = Balance.from_tao(1.00).rao

@@ -7,7 +7,7 @@ EXTRINSIC_SUBMIT_ENCRYPTED = 'SUBMIT_ENCRYPTED'
 ROOT_NETUID = 0
 
 STAKE_PRICE_UPPER_BOUND = 0.01
-STAKE_AMOUNT_TAO = 200
+STAKE_AMOUNT_TAO = 150
 MIN_STAKE_RAO = 1000_000_001
 # netuid -> TAO per alpha; move all stake to root when price is above this
 WHITELISTED_SUBNETS = [80, 16, 40, 58, 72]
@@ -20,9 +20,9 @@ BLACK_LISTED_COLDKEYS = [
 ]
 
 UNSTAKE_TO_ROOT_IF_PRICE_ABOVE: dict[int, float] = {
-    80: 0.030,
-    16: 0.030,
-    40: 0.030,
-    58: 0.030,
-    72: 0.030,
+    80: 0.020,
+    16: 0.020,
+    40: 0.020,
+    58: 0.020,
+    72: 0.020,
 }
