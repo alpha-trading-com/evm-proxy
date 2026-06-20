@@ -44,14 +44,19 @@ def get_stake_custom(
 
 def resolve_stake_amount(amount_tao: float | None) -> int:
     """Convert stake amount (None = all free balance, 0<x<1 = fraction) to rao."""
-    subtensor = get_subtensor()
-    coldkey_ss58 = settings.REAL_ACCOUNT_SS58
     if amount_tao is None:
+        subtensor = get_subtensor()
+        coldkey_ss58 = settings.REAL_ACCOUNT_SS58
+    
         free_balance = subtensor.get_balance(coldkey_ss58)
         return max(0, int(free_balance.rao) - 10**9)
+
     if 0 < amount_tao < 1:
+        subtensor = get_subtensor()
+        coldkey_ss58 = settings.REAL_ACCOUNT_SS58
         free_balance = subtensor.get_balance(coldkey_ss58)
         return int(amount_tao * free_balance.rao)
+    
     return int(amount_tao * 10**9)
 
 
